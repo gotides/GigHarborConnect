@@ -294,6 +294,124 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin endpoints
+  app.get("/api/admin/users", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!hasPermission(user, 'canManageUsers')) {
+        return res.status(403).json({ message: "Insufficient permissions to manage users" });
+      }
+      
+      const users = await storage.getAllUsers();
+      res.json(users);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  app.post("/api/admin/users", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!hasPermission(user, 'canManageUsers')) {
+        return res.status(403).json({ message: "Insufficient permissions to manage users" });
+      }
+      
+      // Generate a unique ID for the new user (for manual creation)
+      const newUserId = `manual_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+      
+      const userData = {
+        id: newUserId,
+        email: req.body.email,
+        firstName: req.body.firstName,
+        lastName: req.body.lastName,
+        role: req.body.role,
+        profileImageUrl: null
+      };
+      
+      const newUser = await storage.createUser(userData);
+      res.status(201).json(newUser);
+    } catch (error) {
+      console.error("Error creating user:", error);
+      res.status(500).json({ message: "Failed to create user" });
+    }
+  });
+
+  app.patch("/api/admin/users/:id/role", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!hasPermission(user, 'canManageUsers')) {
+        return res.status(403).json({ message: "Insufficient permissions to manage users" });
+      }
+      
+      const targetUserId = req.params.id;
+      const { role } = req.body;
+      
+      // Prevent user from demoting themselves if they're the last admin
+      if (targetUserId === userId && role !== "Administrator") {
+        const allUsers = await storage.getAllUsers();
+        const adminCount = allUsers.filter(u => u.role === "Administrator").length;
+        if (adminCount <= 1) {
+          return res.status(400).json({ message: "Cannot demote the last administrator" });
+        }
+      }
+      
+      const updatedUser = await storage.updateUserRole(targetUserId, role);
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating user role:", error);
+      res.status(500).json({ message: "Failed to update user role" });
+    }
+  });
+
+  app.delete("/api/admin/users/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!hasPermission(user, 'canManageUsers')) {
+        return res.status(403).json({ message: "Insufficient permissions to manage users" });
+      }
+      
+      const targetUserId = req.params.id;
+      
+      // Prevent user from deleting themselves
+      if (targetUserId === userId) {
+        return res.status(400).json({ message: "Cannot delete your own account" });
+      }
+      
+      // Check if target user is the last admin
+      const targetUser = await storage.getUser(targetUserId);
+      if (targetUser?.role === "Administrator") {
+        const allUsers = await storage.getAllUsers();
+        const adminCount = allUsers.filter(u => u.role === "Administrator").length;
+        if (adminCount <= 1) {
+          return res.status(400).json({ message: "Cannot delete the last administrator" });
+        }
+      }
+      
+      const deleted = await storage.deleteUser(targetUserId);
+      if (!deleted) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      res.status(500).json({ message: "Failed to delete user" });
+    }
+  });
+
   // Serve uploaded files
   app.use("/uploads", (req, res, next) => {
     const filepath = path.join(uploadDir, req.path);

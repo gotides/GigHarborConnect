@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { Anchor, LogOut, User as UserIcon } from "lucide-react";
+import { Anchor, LogOut, User as UserIcon, Shield } from "lucide-react";
 import { SiInstagram } from "react-icons/si";
 import { useAuth } from "@/hooks/useAuth";
 import type { User } from "@shared/schema";
 import { Button } from "@/components/ui/button";
+import { Link } from "wouter";
 import CalendarView from "@/components/calendar-view";
 import ChatView from "@/components/chat-view";
 import PhotosView from "@/components/photos-view";
@@ -80,14 +81,28 @@ export default function Home() {
                       <p className="text-xs text-slate-500 capitalize">{user.role}</p>
                     </div>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => window.location.href = "/api/logout"}
-                    className="text-slate-600 hover:text-navy"
-                  >
-                    <LogOut size={16} />
-                  </Button>
+                  <div className="flex items-center space-x-2">
+                    {user.role === "Administrator" && (
+                      <Link href="/admin">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-slate-600 hover:text-navy"
+                          title="Admin Panel"
+                        >
+                          <Shield size={16} />
+                        </Button>
+                      </Link>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => window.location.href = "/api/logout"}
+                      className="text-slate-600 hover:text-navy"
+                    >
+                      <LogOut size={16} />
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>
