@@ -351,7 +351,16 @@ export default function Admin() {
                         >
                           Cancel
                         </Button>
-                        <Button type="submit" disabled={addUserMutation.isPending}>
+                        <Button 
+                          type="submit" 
+                          disabled={addUserMutation.isPending}
+                          onClick={(e) => {
+                            console.log("Add User button clicked");
+                            console.log("Form valid:", addUserForm.formState.isValid);
+                            console.log("Form values:", addUserForm.getValues());
+                            console.log("Form errors:", addUserForm.formState.errors);
+                          }}
+                        >
                           {addUserMutation.isPending ? "Adding..." : "Add User"}
                         </Button>
                       </div>

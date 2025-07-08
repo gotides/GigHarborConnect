@@ -314,10 +314,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/admin/users", isAuthenticated, async (req: any, res) => {
     try {
+      console.log("POST /api/admin/users - Request body:", req.body);
+      
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
       
+      console.log("POST /api/admin/users - User:", user);
+      
       if (!hasPermission(user, 'canManageUsers')) {
+        console.log("POST /api/admin/users - Permission denied");
         return res.status(403).json({ message: "Insufficient permissions to manage users" });
       }
       
@@ -333,7 +338,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         profileImageUrl: null
       };
       
+      console.log("POST /api/admin/users - Creating user with data:", userData);
+      
       const newUser = await storage.createUser(userData);
+      console.log("POST /api/admin/users - User created:", newUser);
       res.status(201).json(newUser);
     } catch (error) {
       console.error("Error creating user:", error);
