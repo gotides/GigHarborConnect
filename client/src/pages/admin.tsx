@@ -195,8 +195,10 @@ export default function Admin() {
   });
 
   const onAddUser = (data: AddUserFormData) => {
+    console.log("onAddUser function called!");
     console.log("Form submitted with data:", data);
     console.log("Form errors:", addUserForm.formState.errors);
+    console.log("Form validation state:", addUserForm.formState.isValid);
     addUserMutation.mutate(data);
   };
 
@@ -359,6 +361,11 @@ export default function Admin() {
                             console.log("Form valid:", addUserForm.formState.isValid);
                             console.log("Form values:", addUserForm.getValues());
                             console.log("Form errors:", addUserForm.formState.errors);
+                            console.log("Button disabled:", addUserMutation.isPending);
+                            
+                            // Let's trigger validation manually
+                            const isValid = addUserForm.trigger();
+                            console.log("Manual validation result:", isValid);
                           }}
                         >
                           {addUserMutation.isPending ? "Adding..." : "Add User"}
