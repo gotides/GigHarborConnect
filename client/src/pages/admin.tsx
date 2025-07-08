@@ -86,11 +86,8 @@ export default function Admin() {
 
   const addUserMutation = useMutation({
     mutationFn: async (data: AddUserFormData) => {
-      console.log("Adding user with data:", data);
       const response = await apiRequest("POST", "/api/admin/users", data);
-      const result = await response.json();
-      console.log("User added successfully:", result);
-      return result;
+      return await response.json();
     },
     onSuccess: () => {
       toast({
@@ -102,8 +99,6 @@ export default function Admin() {
       addUserForm.reset();
     },
     onError: (error) => {
-      console.log("Add user mutation error:", error);
-      console.log("Error message:", error.message);
       if (isUnauthorizedError(error)) {
         toast({
           title: "Unauthorized",
@@ -117,7 +112,7 @@ export default function Admin() {
       }
       toast({
         title: "Error",
-        description: `Failed to add user: ${error.message}`,
+        description: "Failed to add user",
         variant: "destructive"
       });
     },
@@ -194,10 +189,6 @@ export default function Admin() {
   });
 
   const onAddUser = (data: AddUserFormData) => {
-    console.log("onAddUser function called!");
-    console.log("Form submitted with data:", data);
-    console.log("Form errors:", addUserForm.formState.errors);
-    console.log("Form validation state:", addUserForm.formState.isValid);
     addUserMutation.mutate(data);
   };
 
@@ -355,17 +346,6 @@ export default function Admin() {
                         <Button 
                           type="submit" 
                           disabled={addUserMutation.isPending}
-                          onClick={(e) => {
-                            console.log("Add User button clicked");
-                            console.log("Form valid:", addUserForm.formState.isValid);
-                            console.log("Form values:", addUserForm.getValues());
-                            console.log("Form errors:", addUserForm.formState.errors);
-                            console.log("Button disabled:", addUserMutation.isPending);
-                            
-                            // Let's trigger validation manually
-                            const isValid = addUserForm.trigger();
-                            console.log("Manual validation result:", isValid);
-                          }}
                         >
                           {addUserMutation.isPending ? "Adding..." : "Add User"}
                         </Button>
