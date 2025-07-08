@@ -87,13 +87,10 @@ export default function Admin() {
   const addUserMutation = useMutation({
     mutationFn: async (data: AddUserFormData) => {
       console.log("Adding user with data:", data);
-      const response = await apiRequest(`/api/admin/users`, {
-        method: "POST",
-        body: JSON.stringify(data),
-        headers: { "Content-Type": "application/json" }
-      });
-      console.log("User added successfully:", response);
-      return response;
+      const response = await apiRequest("POST", "/api/admin/users", data);
+      const result = await response.json();
+      console.log("User added successfully:", result);
+      return result;
     },
     onSuccess: () => {
       toast({
