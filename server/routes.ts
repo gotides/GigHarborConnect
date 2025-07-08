@@ -343,9 +343,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/admin/users/:id/role", isAuthenticated, async (req: any, res) => {
     try {
-      console.log("PATCH /api/admin/users/:id/role - Request body:", req.body);
-      console.log("PATCH /api/admin/users/:id/role - Target user ID:", req.params.id);
-      
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
       
@@ -365,18 +362,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      console.log("PATCH /api/admin/users/:id/role - Updating user role:", { targetUserId, role });
       const updatedUser = await storage.updateUserRole(targetUserId, role);
       
       if (!updatedUser) {
-        console.log("PATCH /api/admin/users/:id/role - User not found");
         return res.status(404).json({ message: "User not found" });
       }
       
-      console.log("PATCH /api/admin/users/:id/role - User updated:", updatedUser);
       res.json(updatedUser);
     } catch (error) {
-      console.error("PATCH /api/admin/users/:id/role - Error updating user role:", error);
+      console.error("Error updating user role:", error);
       res.status(500).json({ message: "Failed to update user role" });
     }
   });

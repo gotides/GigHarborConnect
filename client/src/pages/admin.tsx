@@ -368,36 +368,36 @@ export default function Admin() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {users?.map((user: any) => (
-                      <TableRow key={user.id}>
+                    {users?.map((tableUser: any) => (
+                      <TableRow key={tableUser.id}>
                         <TableCell className="font-medium">
-                          {user.firstName && user.lastName
-                            ? `${user.firstName} ${user.lastName}`
-                            : user.email?.split('@')[0] || 'Unknown User'}
+                          {tableUser.firstName && tableUser.lastName
+                            ? `${tableUser.firstName} ${tableUser.lastName}`
+                            : tableUser.email?.split('@')[0] || 'Unknown User'}
                         </TableCell>
-                        <TableCell>{user.email}</TableCell>
+                        <TableCell>{tableUser.email}</TableCell>
                         <TableCell>
-                          <Badge className={getRoleBadgeColor(user.role)}>
-                            {user.role}
+                          <Badge className={getRoleBadgeColor(tableUser.role)}>
+                            {tableUser.role}
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          {new Date(user.createdAt).toLocaleDateString()}
+                          {new Date(tableUser.createdAt).toLocaleDateString()}
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handleEditRole(user)}
+                              onClick={() => handleEditRole(tableUser)}
                             >
                               <Edit className="w-4 h-4" />
                             </Button>
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handleDeleteUser(user.id)}
-                              disabled={user.id === user.id} // Prevent self-deletion
+                              onClick={() => handleDeleteUser(tableUser.id)}
+                              disabled={tableUser.id === user?.id} // Prevent self-deletion
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>
