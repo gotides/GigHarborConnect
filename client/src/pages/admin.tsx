@@ -105,6 +105,8 @@ export default function Admin() {
       addUserForm.reset();
     },
     onError: (error) => {
+      console.log("Add user mutation error:", error);
+      console.log("Error message:", error.message);
       if (isUnauthorizedError(error)) {
         toast({
           title: "Unauthorized",
@@ -118,7 +120,7 @@ export default function Admin() {
       }
       toast({
         title: "Error",
-        description: "Failed to add user",
+        description: `Failed to add user: ${error.message}`,
         variant: "destructive"
       });
     },

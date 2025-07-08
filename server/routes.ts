@@ -344,8 +344,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("POST /api/admin/users - User created:", newUser);
       res.status(201).json(newUser);
     } catch (error) {
-      console.error("Error creating user:", error);
-      res.status(500).json({ message: "Failed to create user" });
+      console.error("POST /api/admin/users - Error creating user:", error);
+      console.error("POST /api/admin/users - Error stack:", error.stack);
+      res.status(500).json({ message: "Failed to create user", error: error.message });
     }
   });
 
