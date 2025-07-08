@@ -11,12 +11,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, UserPlus, Shield, Edit } from "lucide-react";
+import { Trash2, UserPlus, Shield, Edit, ArrowLeft } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useLocation } from "wouter";
 
 const roleOptions = [
   { value: "Administrator", label: "Administrator" },
@@ -43,6 +44,7 @@ type UpdateRoleFormData = z.infer<typeof updateRoleSchema>;
 export default function Admin() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
+  const [, setLocation] = useLocation();
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
   const [isEditRoleOpen, setIsEditRoleOpen] = useState(false);
@@ -233,13 +235,23 @@ export default function Admin() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 dark:from-gray-900 dark:to-gray-800">
       <div className="container mx-auto p-6">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            User Administration
-          </h1>
-          <p className="text-gray-600 dark:text-gray-300">
-            Manage user accounts and permissions for Tides Hub
-          </p>
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+              User Administration
+            </h1>
+            <p className="text-gray-600 dark:text-gray-300">
+              Manage user accounts and permissions for Tides Hub
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            onClick={() => setLocation('/')}
+            className="bg-columbia-600 border-columbia-500 text-white hover:bg-columbia-700"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Done
+          </Button>
         </div>
 
         <div className="grid gap-6">
