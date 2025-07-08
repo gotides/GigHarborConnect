@@ -247,7 +247,7 @@ export default function Admin() {
           <Button
             variant="outline"
             onClick={() => setLocation('/')}
-            className="bg-columbia-600 border-columbia-500 text-white hover:bg-columbia-700"
+            className="bg-blue-600 border-blue-500 text-white hover:bg-blue-700"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Done
