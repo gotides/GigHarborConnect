@@ -120,11 +120,8 @@ export default function Admin() {
 
   const updateRoleMutation = useMutation({
     mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
-      await apiRequest(`/api/admin/users/${userId}/role`, {
-        method: "PATCH",
-        body: JSON.stringify({ role }),
-        headers: { "Content-Type": "application/json" }
-      });
+      const response = await apiRequest("PATCH", `/api/admin/users/${userId}/role`, { role });
+      return await response.json();
     },
     onSuccess: () => {
       toast({
@@ -157,9 +154,8 @@ export default function Admin() {
 
   const deleteUserMutation = useMutation({
     mutationFn: async (userId: string) => {
-      await apiRequest(`/api/admin/users/${userId}`, {
-        method: "DELETE"
-      });
+      const response = await apiRequest("DELETE", `/api/admin/users/${userId}`);
+      return await response.json();
     },
     onSuccess: () => {
       toast({
