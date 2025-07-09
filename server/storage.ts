@@ -209,21 +209,44 @@ export class DatabaseStorage implements IStorage {
   }
 
   async upsertProfile(insertProfile: InsertProfile): Promise<Profile> {
-    const [profile] = await db
-      .insert(profiles)
-      .values(insertProfile)
-      .onConflictDoUpdate({
-        target: profiles.id,
-        set: {
-          name: insertProfile.name,
-          phoneNumber: insertProfile.phoneNumber,
-          emailAddress: insertProfile.emailAddress,
-          profilePhoto: insertProfile.profilePhoto,
-          updatedAt: new Date(),
-        },
-      })
-      .returning();
-    return profile;
+    console.log("Storage.upsertProfile - Input data:", insertProfile);
+    
+    try {
+      // Get existing profile to preserve photo if no new photo provided
+      let existingProfile: Profile | undefined;
+      try {
+        existingProfile = await this.getProfile(insertProfile.id);
+      } catch (e) {
+        // Profile doesn't exist yet, that's fine
+      }
+      
+      // If no new photo provided, keep existing photo
+      const finalProfilePhoto = insertProfile.profilePhoto || existingProfile?.profilePhoto || null;
+      
+      const [profile] = await db
+        .insert(profiles)
+        .values({
+          ...insertProfile,
+          profilePhoto: finalProfilePhoto,
+        })
+        .onConflictDoUpdate({
+          target: profiles.id,
+          set: {
+            name: insertProfile.name,
+            phoneNumber: insertProfile.phoneNumber,
+            emailAddress: insertProfile.emailAddress,
+            profilePhoto: finalProfilePhoto,
+            updatedAt: new Date(),
+          },
+        })
+        .returning();
+      
+      console.log("Storage.upsertProfile - Result:", profile);
+      return profile;
+    } catch (error) {
+      console.error("Storage.upsertProfile - Database error:", error);
+      throw error;
+    }
   }
 }
 
