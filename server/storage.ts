@@ -45,6 +45,11 @@ export interface IStorage {
   getPhoto(id: number): Promise<Photo | undefined>;
   createPhoto(photo: InsertPhoto): Promise<Photo>;
   deletePhoto(id: number): Promise<boolean>;
+  
+  // Profile methods
+  getProfiles(): Promise<Profile[]>;
+  getProfile(userId: string): Promise<Profile | undefined>;
+  upsertProfile(profile: InsertProfile): Promise<Profile>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -188,6 +193,47 @@ export class DatabaseStorage implements IStorage {
       .delete(photos)
       .where(eq(photos.id, id));
     return result.rowCount !== null && result.rowCount > 0;
+  }
+
+  // Profile methods
+  async getProfiles(): Promise<Profile[]> {
+    const result = await db
+      .select({
+        id: profiles.id,
+        name: profiles.name,
+        phoneNumber: profiles.phoneNumber,
+        emailAddress: profiles.emailAddress,
+        profilePhoto: profiles.profilePhoto,
+        createdAt: profiles.createdAt,
+        updatedAt: profiles.updatedAt,
+        role: users.role,
+      })
+      .from(profiles)
+      .innerJoin(users, eq(profiles.id, users.id));
+    return result;
+  }
+
+  async getProfile(userId: string): Promise<Profile | undefined> {
+    const [profile] = await db.select().from(profiles).where(eq(profiles.id, userId));
+    return profile || undefined;
+  }
+
+  async upsertProfile(insertProfile: InsertProfile): Promise<Profile> {
+    const [profile] = await db
+      .insert(profiles)
+      .values(insertProfile)
+      .onConflictDoUpdate({
+        target: profiles.id,
+        set: {
+          name: insertProfile.name,
+          phoneNumber: insertProfile.phoneNumber,
+          emailAddress: insertProfile.emailAddress,
+          profilePhoto: insertProfile.profilePhoto,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return profile;
   }
 }
 

@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage, hasPermission } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { insertEventSchema, insertMessageSchema, insertPhotoSchema } from "@shared/schema";
+import { insertEventSchema, insertMessageSchema, insertPhotoSchema, insertProfileSchema } from "@shared/schema";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -410,6 +410,122 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting user:", error);
       res.status(500).json({ message: "Failed to delete user" });
+    }
+  });
+
+  // Profiles endpoints
+  app.get("/api/profiles", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      // Check if user has permission to view profiles (Administrator, Editor, or Contributor)
+      if (!["Administrator", "Editor", "Contributor"].includes(user?.role || "")) {
+        return res.status(403).json({ message: "Insufficient permissions to view profiles" });
+      }
+      
+      const profiles = await storage.getProfiles();
+      res.json(profiles);
+    } catch (error) {
+      console.error("Error fetching profiles:", error);
+      res.status(500).json({ message: "Failed to fetch profiles" });
+    }
+  });
+
+  app.get("/api/profiles/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      // Check if user has permission to view profiles
+      if (!["Administrator", "Editor", "Contributor"].includes(user?.role || "")) {
+        return res.status(403).json({ message: "Insufficient permissions to view profiles" });
+      }
+      
+      const targetUserId = req.params.id;
+      const profile = await storage.getProfile(targetUserId);
+      
+      if (!profile) {
+        return res.status(404).json({ message: "Profile not found" });
+      }
+      
+      res.json(profile);
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+      res.status(500).json({ message: "Failed to fetch profile" });
+    }
+  });
+
+  app.put("/api/profiles", isAuthenticated, upload.single('profilePhoto'), async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      // Check if user has permission to create/update profiles
+      if (!["Administrator", "Editor", "Contributor"].includes(user?.role || "")) {
+        return res.status(403).json({ message: "Insufficient permissions to manage profiles" });
+      }
+      
+      const { name, phoneNumber, emailAddress } = req.body;
+      
+      let profilePhoto = null;
+      if (req.file) {
+        // Generate a unique filename
+        const ext = path.extname(req.file.originalname);
+        const filename = `profile_${userId}_${Date.now()}${ext}`;
+        const newPath = path.join(uploadDir, filename);
+        
+        // Move the uploaded file to the final location
+        fs.renameSync(req.file.path, newPath);
+        profilePhoto = filename;
+      }
+      
+      const profileData = {
+        id: userId,
+        name,
+        phoneNumber: phoneNumber || null,
+        emailAddress,
+        profilePhoto,
+      };
+      
+      // Validate the data
+      const parsedData = insertProfileSchema.parse(profileData);
+      
+      const profile = await storage.upsertProfile(parsedData);
+      res.json(profile);
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      res.status(500).json({ message: "Failed to update profile" });
+    }
+  });
+
+  app.get("/api/profiles/:id/photo", async (req, res) => {
+    try {
+      const targetUserId = req.params.id;
+      const profile = await storage.getProfile(targetUserId);
+      
+      if (!profile || !profile.profilePhoto) {
+        return res.status(404).json({ message: "Profile photo not found" });
+      }
+      
+      const filepath = path.join(uploadDir, profile.profilePhoto);
+      if (!fs.existsSync(filepath)) {
+        return res.status(404).json({ message: "Profile photo file not found" });
+      }
+      
+      // Determine content type based on file extension
+      const ext = path.extname(profile.profilePhoto).toLowerCase();
+      let contentType = 'image/jpeg';
+      if (ext === '.png') contentType = 'image/png';
+      else if (ext === '.gif') contentType = 'image/gif';
+      else if (ext === '.webp') contentType = 'image/webp';
+      
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Content-Disposition', `inline; filename="profile_${targetUserId}${ext}"`);
+      fs.createReadStream(filepath).pipe(res);
+    } catch (error) {
+      console.error("Error serving profile photo:", error);
+      res.status(500).json({ message: "Failed to serve profile photo" });
     }
   });
 

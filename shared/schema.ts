@@ -61,6 +61,16 @@ export const photos = pgTable("photos", {
   uploadedAt: timestamp("uploaded_at").defaultNow().notNull(),
 });
 
+export const profiles = pgTable("profiles", {
+  id: varchar("id").primaryKey().references(() => users.id),
+  name: text("name").notNull(),
+  phoneNumber: text("phone_number"),
+  emailAddress: text("email_address").notNull(),
+  profilePhoto: text("profile_photo"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Role definitions
 export const roles = {
   ADMINISTRATOR: "Administrator",
@@ -171,6 +181,11 @@ export const insertPhotoSchema = createInsertSchema(photos).omit({
   uploadedAt: true,
 });
 
+export const insertProfileSchema = createInsertSchema(profiles).omit({
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type UpsertUser = z.infer<typeof upsertUserSchema>;
@@ -180,3 +195,5 @@ export type Message = typeof messages.$inferSelect;
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
 export type Photo = typeof photos.$inferSelect;
 export type InsertPhoto = z.infer<typeof insertPhotoSchema>;
+export type Profile = typeof profiles.$inferSelect;
+export type InsertProfile = z.infer<typeof insertProfileSchema>;

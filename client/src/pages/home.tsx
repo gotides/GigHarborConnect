@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Anchor, LogOut, User as UserIcon, Shield } from "lucide-react";
+import { Anchor, LogOut, User as UserIcon, Shield, Users } from "lucide-react";
 import { SiInstagram } from "react-icons/si";
 import { useAuth } from "@/hooks/useAuth";
 import type { User } from "@shared/schema";
@@ -91,6 +91,18 @@ export default function Home() {
                           title="Admin Panel"
                         >
                           <Shield size={16} />
+                        </Button>
+                      </Link>
+                    )}
+                    {["Administrator", "Editor", "Contributor"].includes(user.role || "") && (
+                      <Link href="/profiles">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-slate-600 hover:text-navy"
+                          title="Team Profiles"
+                        >
+                          <Users size={16} />
                         </Button>
                       </Link>
                     )}
