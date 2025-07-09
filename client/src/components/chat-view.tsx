@@ -3,7 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { apiRequest } from "@/lib/queryClient";
 import { format } from "date-fns";
-import { Anchor, Send, Search, Settings, Paperclip, Smile, Flag, Circle } from "lucide-react";
+import { Anchor, Send, Search, Settings, Paperclip, Smile, Flag, Circle, Edit2, Trash2, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -44,6 +44,8 @@ function getInitials(name: string): string {
 export default function ChatView() {
   const [activeChannel, setActiveChannel] = useState("general");
   const [messageContent, setMessageContent] = useState("");
+  const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
+  const [editingContent, setEditingContent] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { user } = useAuth();
@@ -88,6 +90,50 @@ export default function ChatView() {
     },
   });
 
+  const editMessageMutation = useMutation({
+    mutationFn: async ({ messageId, content }: { messageId: number; content: string }) => {
+      const response = await apiRequest("PUT", `/api/messages/${messageId}`, { content });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/messages"] });
+      setEditingMessageId(null);
+      setEditingContent("");
+      toast({
+        title: "Message updated",
+        description: "Your message has been updated successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update message. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteMessageMutation = useMutation({
+    mutationFn: async (messageId: number) => {
+      const response = await apiRequest("DELETE", `/api/messages/${messageId}`, {});
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/messages"] });
+      toast({
+        title: "Message deleted",
+        description: "Your message has been deleted successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete message. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleSendMessage = () => {
     if (!messageContent.trim()) return;
 
@@ -97,6 +143,31 @@ export default function ChatView() {
     };
 
     sendMessageMutation.mutate(messageData);
+  };
+
+  const handleEditMessage = (messageId: number, currentContent: string) => {
+    setEditingMessageId(messageId);
+    setEditingContent(currentContent);
+  };
+
+  const handleSaveEdit = () => {
+    if (!editingContent.trim() || !editingMessageId) return;
+    editMessageMutation.mutate({ messageId: editingMessageId, content: editingContent });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingMessageId(null);
+    setEditingContent("");
+  };
+
+  const handleDeleteMessage = (messageId: number) => {
+    if (confirm("Are you sure you want to delete this message?")) {
+      deleteMessageMutation.mutate(messageId);
+    }
+  };
+
+  const canEditOrDeleteMessage = (message: Message) => {
+    return user && message.authorId === user.id;
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -241,10 +312,78 @@ export default function ChatView() {
                     <span className="text-xs text-slate-500">
                       {format(new Date(message.createdAt), "h:mm a")}
                     </span>
+                    {message.editedAt && (
+                      <span className="text-xs text-slate-400 italic">
+                        (edited)
+                      </span>
+                    )}
                   </div>
-                  <p className="text-slate-700">{message.content}</p>
+                  
+                  {editingMessageId === message.id ? (
+                    <div className="space-y-2">
+                      <Input
+                        value={editingContent}
+                        onChange={(e) => setEditingContent(e.target.value)}
+                        className="text-sm"
+                        autoFocus
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            handleSaveEdit();
+                          }
+                          if (e.key === 'Escape') {
+                            handleCancelEdit();
+                          }
+                        }}
+                      />
+                      <div className="flex space-x-2">
+                        <Button
+                          size="sm"
+                          onClick={handleSaveEdit}
+                          disabled={editMessageMutation.isPending}
+                          className="h-7 text-xs bg-columbia hover:bg-blue-600"
+                        >
+                          <Check className="w-3 h-3 mr-1" />
+                          Save
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleCancelEdit}
+                          className="h-7 text-xs"
+                        >
+                          <X className="w-3 h-3 mr-1" />
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-slate-700">{message.content}</p>
+                  )}
                 </div>
-                <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity flex space-x-1">
+                  {canEditOrDeleteMessage(message) && (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEditMessage(message.id, message.content)}
+                        className="text-slate-400 hover:text-blue-500 hover:bg-blue-50"
+                        title="Edit message"
+                      >
+                        <Edit2 className="w-3 h-3" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteMessage(message.id)}
+                        className="text-slate-400 hover:text-red-500 hover:bg-red-50"
+                        title="Delete message"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    </>
+                  )}
                   <Button
                     variant="ghost"
                     size="sm"

@@ -195,6 +195,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const messageData = {
         ...req.body,
         authorName: authorName,
+        authorId: userId,
         authorInitials: authorName.split(' ').map(part => part[0]).join('').toUpperCase().slice(0, 2),
         authorColor: `hsl(${(authorName.length * 137) % 360}, 70%, 50%)`
       };
@@ -220,6 +221,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(200).json({ message: "Message marked as inappropriate" });
     } catch (error) {
       res.status(500).json({ message: "Failed to mark message as inappropriate" });
+    }
+  });
+
+  app.put("/api/messages/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const messageId = parseInt(req.params.id);
+      const userId = req.user.claims.sub;
+      const { content } = req.body;
+
+      if (!content || typeof content !== 'string') {
+        return res.status(400).json({ message: "Content is required" });
+      }
+
+      const updatedMessage = await storage.updateMessage(messageId, content, userId);
+      
+      if (!updatedMessage) {
+        return res.status(404).json({ message: "Message not found or insufficient permissions" });
+      }
+
+      res.json(updatedMessage);
+    } catch (error) {
+      console.error("Error updating message:", error);
+      res.status(500).json({ message: "Failed to update message" });
+    }
+  });
+
+  app.delete("/api/messages/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const messageId = parseInt(req.params.id);
+      const userId = req.user.claims.sub;
+
+      const success = await storage.deleteMessage(messageId, userId);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Message not found or insufficient permissions" });
+      }
+
+      res.json({ message: "Message deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting message:", error);
+      res.status(500).json({ message: "Failed to delete message" });
     }
   });
 

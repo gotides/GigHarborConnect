@@ -43,8 +43,10 @@ export const messages = pgTable("messages", {
   channel: text("channel").notNull().default("general"),
   authorName: text("author_name").notNull(),
   authorInitials: text("author_initials").notNull(),
+  authorId: text("author_id").notNull(), // Add author ID for edit/delete permissions
   authorColor: text("author_color").notNull(),
   inappropriate: text("inappropriate").notNull().default("false"),
+  editedAt: timestamp("edited_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

@@ -41,6 +41,8 @@ export interface IStorage {
   getMessages(channel?: string): Promise<Message[]>;
   getMessage(id: number): Promise<Message | undefined>;
   createMessage(message: InsertMessage): Promise<Message>;
+  updateMessage(id: number, content: string, userId: string): Promise<Message | undefined>;
+  deleteMessage(id: number, userId: string): Promise<boolean>;
   markMessageInappropriate(id: number): Promise<boolean>;
   getRecentAnnouncementMessages(): Promise<Message[]>;
   
@@ -164,6 +166,51 @@ export class DatabaseStorage implements IStorage {
       .values(insertMessage)
       .returning();
     return message;
+  }
+
+  async updateMessage(id: number, content: string, userId: string): Promise<Message | undefined> {
+    // First check if the user is the author or has admin permissions
+    const [existingMessage] = await db.select().from(messages).where(eq(messages.id, id));
+    if (!existingMessage) return undefined;
+    
+    // Get user to check permissions
+    const user = await this.getUser(userId);
+    if (!user) return undefined;
+    
+    // Allow if user is the author or has admin permissions
+    const canEdit = existingMessage.authorId === userId || hasPermission(user, 'canEditMessages');
+    if (!canEdit) return undefined;
+    
+    const [updatedMessage] = await db
+      .update(messages)
+      .set({ 
+        content,
+        editedAt: new Date()
+      })
+      .where(eq(messages.id, id))
+      .returning();
+    
+    return updatedMessage || undefined;
+  }
+
+  async deleteMessage(id: number, userId: string): Promise<boolean> {
+    // First check if the user is the author or has admin permissions
+    const [existingMessage] = await db.select().from(messages).where(eq(messages.id, id));
+    if (!existingMessage) return false;
+    
+    // Get user to check permissions
+    const user = await this.getUser(userId);
+    if (!user) return false;
+    
+    // Allow if user is the author or has admin permissions
+    const canDelete = existingMessage.authorId === userId || hasPermission(user, 'canDeleteMessages');
+    if (!canDelete) return false;
+    
+    const result = await db
+      .delete(messages)
+      .where(eq(messages.id, id));
+    
+    return result.rowCount !== null && result.rowCount > 0;
   }
 
   async markMessageInappropriate(id: number): Promise<boolean> {
