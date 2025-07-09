@@ -116,6 +116,12 @@ Tides Hub is a full-stack web application designed for the Tides Girls Water Pol
 
 ## Changelog
 - July 09, 2025: Enhanced Profile Management with Team Roles and Recent Announcements Feature
+  - ✓ Updated SQL schema documentation with complete DDL export from database
+  - ✓ Added profiles table with team roles (player, coach, parent/relative)
+  - ✓ Added message editing functionality with author_id and edited_at columns
+  - ✓ Updated all indexes and constraints to match current database structure
+  - ✓ Created comprehensive schema file with all tables, foreign keys, and sample data
+  - ✓ Recent Announcements feature automatically removes #announcements hashtag from display text
   - ✓ Successfully debugged and fixed profile saving functionality after extensive troubleshooting
   - ✓ Resolved database schema mismatch between snake_case and camelCase column naming
   - ✓ Updated profiles table structure to match TypeScript schema definitions
