@@ -96,6 +96,19 @@ export default function CalendarView() {
     }
   };
 
+  const getAuthorName = (userId: string | null) => {
+    if (!userId) return 'Unknown';
+    // Map known user IDs to display names
+    switch (userId) {
+      case '44503831':
+        return 'Rob Nelson';
+      case '44695004':
+        return 'Tides Admin';
+      default:
+        return 'Team Member';
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="bg-white rounded-xl shadow-lg p-6">
@@ -250,6 +263,11 @@ export default function CalendarView() {
                     {format(new Date(event.startDate), "MMM d, h:mm a")}
                     {event.location && ` • ${event.location}`}
                   </p>
+                  {event.createdBy && (
+                    <p className="text-xs text-slate-500">
+                      by {getAuthorName(event.createdBy)}
+                    </p>
+                  )}
                 </div>
                 <i className="fas fa-chevron-right text-slate-400"></i>
               </div>
@@ -319,7 +337,9 @@ export default function CalendarView() {
                   <User className="w-5 h-5 text-gray-400 mt-0.5" />
                   <div>
                     <h4 className="font-medium text-gray-900">Created By</h4>
-                    <p className="text-gray-600">Team Administrator</p>
+                    <p className="text-gray-600">
+                      {getAuthorName(selectedEvent.createdBy)}
+                    </p>
                   </div>
                 </div>
               )}
