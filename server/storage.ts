@@ -309,6 +309,7 @@ export class DatabaseStorage implements IStorage {
           teamRole: insertProfile.teamRole,
           playerNumber: insertProfile.playerNumber,
           playerName: insertProfile.playerName,
+          parentPhoneNumber: insertProfile.parentPhoneNumber,
           updatedAt: new Date(),
         },
       })

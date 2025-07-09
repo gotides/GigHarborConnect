@@ -72,6 +72,7 @@ export const profiles = pgTable("profiles", {
   teamRole: text("teamRole").notNull().default("player"), // player, coach, parent
   playerNumber: text("playerNumber"), // only for players
   playerName: text("playerName"), // only for players
+  parentPhoneNumber: text("parentPhoneNumber"), // only for players
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });

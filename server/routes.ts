@@ -517,7 +517,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Insufficient permissions to manage profiles" });
       }
       
-      const { name, phoneNumber, emailAddress, teamRole, playerNumber, playerName } = req.body;
+      const { name, phoneNumber, emailAddress, teamRole, playerNumber, playerName, parentPhoneNumber } = req.body;
       
       let profilePhoto = null;
       if (req.file) {
@@ -540,6 +540,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         teamRole: teamRole || "player",
         playerNumber: playerNumber || null,
         playerName: playerName || null,
+        parentPhoneNumber: parentPhoneNumber || null,
       };
       
       // Validate the data

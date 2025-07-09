@@ -26,6 +26,16 @@ const profileFormSchema = z.object({
   teamRole: z.enum(["player", "coach", "parent"]).default("player"),
   playerNumber: z.string().optional(),
   playerName: z.string().optional(),
+  parentPhoneNumber: z.string().optional(),
+}).refine((data) => {
+  // If team role is player, parent phone number is required
+  if (data.teamRole === "player") {
+    return data.parentPhoneNumber && data.parentPhoneNumber.trim().length > 0;
+  }
+  return true;
+}, {
+  message: "Parent phone number is required for players",
+  path: ["parentPhoneNumber"],
 });
 
 type ProfileFormData = z.infer<typeof profileFormSchema>;
@@ -39,6 +49,7 @@ interface UserProfile {
   teamRole: string;
   playerNumber?: string | null;
   playerName?: string | null;
+  parentPhoneNumber?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -80,6 +91,7 @@ export default function Profiles() {
       teamRole: "player" as const,
       playerNumber: "",
       playerName: "",
+      parentPhoneNumber: "",
     }
   });
 
@@ -97,6 +109,9 @@ export default function Profiles() {
       }
       if (data.playerName) {
         formData.append("playerName", data.playerName);
+      }
+      if (data.parentPhoneNumber) {
+        formData.append("parentPhoneNumber", data.parentPhoneNumber);
       }
       if (data.profilePhoto) {
         formData.append("profilePhoto", data.profilePhoto);
@@ -153,6 +168,7 @@ export default function Profiles() {
       profileForm.setValue("teamRole", profile.teamRole as "player" | "coach" | "parent");
       profileForm.setValue("playerNumber", profile.playerNumber || "");
       profileForm.setValue("playerName", profile.playerName || "");
+      profileForm.setValue("parentPhoneNumber", profile.parentPhoneNumber || "");
     } else {
       // Create new profile for current user
       setSelectedProfile(null);
@@ -162,6 +178,7 @@ export default function Profiles() {
       profileForm.setValue("teamRole", "player");
       profileForm.setValue("playerNumber", "");
       profileForm.setValue("playerName", "");
+      profileForm.setValue("parentPhoneNumber", "");
     }
     setIsEditProfileOpen(true);
   };
@@ -361,6 +378,13 @@ export default function Profiles() {
                             <span>{profile.phoneNumber}</span>
                           </div>
                         )}
+                        
+                        {profile.teamRole === "player" && profile.parentPhoneNumber && (
+                          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+                            <Phone className="w-4 h-4" />
+                            <span className="text-xs">Parent: {profile.parentPhoneNumber}</span>
+                          </div>
+                        )}
                       </div>
                       
                       {profile.id === user?.id && (
@@ -535,6 +559,20 @@ export default function Profiles() {
                           <FormLabel>Player Name (for roster)</FormLabel>
                           <FormControl>
                             <Input placeholder="Enter player name for roster" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={profileForm.control}
+                      name="parentPhoneNumber"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Parent/Guardian Phone Number *</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter parent/guardian phone number" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
