@@ -3,6 +3,7 @@ import {
   events,
   messages,
   photos,
+  profiles,
   type User,
   type UpsertUser,
   type Event,
@@ -11,6 +12,8 @@ import {
   type InsertMessage,
   type Photo,
   type InsertPhoto,
+  type Profile,
+  type InsertProfile,
   permissions,
 } from "@shared/schema";
 import { db } from "./db";
