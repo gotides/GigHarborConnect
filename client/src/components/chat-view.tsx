@@ -175,7 +175,7 @@ export default function ChatView() {
   };
 
   const getMessageAuthorProfile = (message: Message) => {
-    return profiles.find((profile: any) => profile.userId === message.authorId);
+    return profiles.find((profile: any) => profile.id === message.authorId);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -309,7 +309,7 @@ export default function ChatView() {
                 <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden">
                   {authorProfile?.profilePhoto ? (
                     <img
-                      src={`/api/profiles/${authorProfile.userId}/photo`}
+                      src={`/api/profiles/${authorProfile.id}/photo`}
                       alt={message.authorName}
                       className="w-full h-full object-cover"
                     />
