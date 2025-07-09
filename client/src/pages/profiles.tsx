@@ -13,10 +13,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Users, Edit, Upload, Phone, Mail, User, Camera, UserCheck, Trophy, Heart } from "lucide-react";
+import { Users, Edit, Upload, Phone, Mail, User, Camera, UserCheck, Trophy, Heart, ArrowLeft } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useLocation } from "wouter";
 
 const profileFormSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -45,6 +46,7 @@ interface UserProfile {
 export default function Profiles() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
+  const [, setLocation] = useLocation();
   const [selectedProfile, setSelectedProfile] = useState<UserProfile | null>(null);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -263,13 +265,23 @@ export default function Profiles() {
               View and manage team member profiles
             </p>
           </div>
-          <Button
-            onClick={() => handleEditProfile(currentUserProfile)}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
-          >
-            <Edit className="w-4 h-4 mr-2" />
-            {currentUserProfile ? "Edit My Profile" : "Create My Profile"}
-          </Button>
+          <div className="flex items-center gap-3">
+            <Button 
+              onClick={() => setLocation("/")}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Done
+            </Button>
+            <Button
+              onClick={() => handleEditProfile(currentUserProfile)}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              <Edit className="w-4 h-4 mr-2" />
+              {currentUserProfile ? "Edit My Profile" : "Create My Profile"}
+            </Button>
+          </div>
         </div>
 
         {/* Profiles Grid */}
