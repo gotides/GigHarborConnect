@@ -457,27 +457,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.put("/api/profiles", isAuthenticated, upload.single('profilePhoto'), async (req: any, res) => {
-    console.log("PUT /api/profiles - Request received");
-    console.log("PUT /api/profiles - Headers:", req.headers);
-    console.log("PUT /api/profiles - Body:", req.body);
-    console.log("PUT /api/profiles - File:", req.file);
-    
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
       
-      console.log("PUT /api/profiles - User ID:", userId);
-      console.log("PUT /api/profiles - User role:", user?.role);
-      
       // Check if user has permission to create/update profiles
       if (!["Administrator", "Editor", "Contributor"].includes(user?.role || "")) {
-        console.log("PUT /api/profiles - Permission denied");
         return res.status(403).json({ message: "Insufficient permissions to manage profiles" });
       }
       
       const { name, phoneNumber, emailAddress } = req.body;
-      
-      console.log("PUT /api/profiles - Extracted fields:", { name, phoneNumber, emailAddress });
       
       let profilePhoto = null;
       if (req.file) {
@@ -489,7 +478,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Move the uploaded file to the final location
         fs.renameSync(req.file.path, newPath);
         profilePhoto = filename;
-        console.log("PUT /api/profiles - Photo saved:", filename);
       }
       
       const profileData = {
@@ -500,20 +488,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         profilePhoto,
       };
       
-      console.log("PUT /api/profiles - Profile data:", profileData);
-      
       // Validate the data
       const parsedData = insertProfileSchema.parse(profileData);
-      console.log("PUT /api/profiles - Parsed data:", parsedData);
       
       const profile = await storage.upsertProfile(parsedData);
-      console.log("PUT /api/profiles - Profile saved:", profile);
-      
       res.json(profile);
     } catch (error) {
-      console.error("PUT /api/profiles - Error:", error);
-      console.error("PUT /api/profiles - Error stack:", error.stack);
-      res.status(500).json({ message: "Failed to update profile", error: error.message });
+      console.error("Error updating profile:", error);
+      res.status(500).json({ message: "Failed to update profile" });
     }
   });
 
@@ -556,6 +538,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(404).json({ message: "File not found" });
     }
   });
+
+
 
   const httpServer = createServer(app);
   return httpServer;
