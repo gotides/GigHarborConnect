@@ -55,6 +55,10 @@ export default function ChatView() {
     refetchInterval: 3000, // Poll every 3 seconds for new messages
   });
 
+  const { data: profiles = [] } = useQuery({
+    queryKey: ["/api/profiles"],
+  });
+
   const sendMessageMutation = useMutation({
     mutationFn: async (messageData: {
       content: string;
@@ -168,6 +172,10 @@ export default function ChatView() {
 
   const canEditOrDeleteMessage = (message: Message) => {
     return user && message.authorId === user.id;
+  };
+
+  const getMessageAuthorProfile = (message: Message) => {
+    return profiles.find((profile: any) => profile.userId === message.authorId);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -294,15 +302,27 @@ export default function ChatView() {
               </span>
             </div>
 
-            {messages.map((message) => (
+            {messages.map((message) => {
+              const authorProfile = getMessageAuthorProfile(message);
+              return (
               <div key={message.id} className="flex items-start space-x-3 group">
-                <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-                  style={{ backgroundColor: message.authorColor }}
-                >
-                  <span className="text-white text-xs font-bold">
-                    {message.authorInitials}
-                  </span>
+                <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden">
+                  {authorProfile?.profilePhoto ? (
+                    <img
+                      src={`/api/profiles/${authorProfile.userId}/photo`}
+                      alt={message.authorName}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div
+                      className="w-full h-full flex items-center justify-center"
+                      style={{ backgroundColor: message.authorColor }}
+                    >
+                      <span className="text-white text-xs font-bold">
+                        {message.authorInitials}
+                      </span>
+                    </div>
+                  )}
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center space-x-2 mb-1">
@@ -395,7 +415,7 @@ export default function ChatView() {
                   </Button>
                 </div>
               </div>
-            ))}
+            )})}
           </>
         )}
         <div ref={messagesEndRef} />
