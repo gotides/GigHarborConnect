@@ -64,11 +64,11 @@ export const photos = pgTable("photos", {
 export const profiles = pgTable("profiles", {
   id: varchar("id").primaryKey().references(() => users.id),
   name: text("name").notNull(),
-  phoneNumber: text("phone_number"),
-  emailAddress: text("email_address").notNull(),
-  profilePhoto: text("profile_photo"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  phoneNumber: text("phoneNumber"),
+  emailAddress: text("emailAddress").notNull(),
+  profilePhoto: text("profilePhoto"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
 // Role definitions
