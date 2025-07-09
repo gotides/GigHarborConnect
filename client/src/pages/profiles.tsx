@@ -31,7 +31,6 @@ interface UserProfile {
   phoneNumber?: string | null;
   emailAddress: string;
   profilePhoto?: string | null;
-  role: string;
   createdAt: string;
   updatedAt: string;
 }

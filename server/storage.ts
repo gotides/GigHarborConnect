@@ -200,20 +200,7 @@ export class DatabaseStorage implements IStorage {
 
   // Profile methods
   async getProfiles(): Promise<Profile[]> {
-    const result = await db
-      .select({
-        id: profiles.id,
-        name: profiles.name,
-        phoneNumber: profiles.phoneNumber,
-        emailAddress: profiles.emailAddress,
-        profilePhoto: profiles.profilePhoto,
-        createdAt: profiles.createdAt,
-        updatedAt: profiles.updatedAt,
-        role: users.role,
-      })
-      .from(profiles)
-      .innerJoin(users, eq(profiles.id, users.id));
-    return result;
+    return await db.select().from(profiles);
   }
 
   async getProfile(userId: string): Promise<Profile | undefined> {
