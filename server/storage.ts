@@ -237,10 +237,13 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(messages.createdAt))
       .limit(10);
     
-    // Filter messages that contain #announcements tag
-    return recentMessages.filter(message => 
-      message.content.toLowerCase().includes('#announcements')
-    );
+    // Filter messages that contain #announcements tag and remove the hashtag from content
+    return recentMessages
+      .filter(message => message.content.toLowerCase().includes('#announcements'))
+      .map(message => ({
+        ...message,
+        content: message.content.replace(/#announcements/g, '').trim()
+      }));
   }
 
   // Photo methods
