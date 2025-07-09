@@ -83,10 +83,23 @@ export default function Profiles() {
         formData.append("profilePhoto", data.profilePhoto);
       }
       
-      return await apiRequest("/api/profiles", {
-        method: "PUT",
-        body: formData,
-      });
+      console.log("Frontend: Making API request to /api/profiles");
+      console.log("Frontend: FormData contents:");
+      for (let [key, value] of formData.entries()) {
+        console.log(`  ${key}:`, value);
+      }
+      
+      try {
+        const result = await apiRequest("/api/profiles", {
+          method: "PUT",
+          body: formData,
+        });
+        console.log("Frontend: Success response:", result);
+        return result;
+      } catch (error) {
+        console.error("Frontend: Error response:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       toast({
@@ -135,6 +148,8 @@ export default function Profiles() {
   };
 
   const onSubmit = (data: ProfileFormData) => {
+    console.log("Frontend: Form submitted with data:", data);
+    console.log("Frontend: Selected file:", selectedFile);
     updateProfileMutation.mutate({
       ...data,
       profilePhoto: selectedFile || undefined,
