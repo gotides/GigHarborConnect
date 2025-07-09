@@ -2,10 +2,11 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday, isSameMonth } from "date-fns";
-import { Plus, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, ChevronLeft, ChevronRight, Clock, MapPin, User, Calendar as CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import EventForm from "@/components/event-form";
 import type { Event } from "@shared/schema";
 
@@ -13,6 +14,7 @@ export default function CalendarView() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [isEventFormOpen, setIsEventFormOpen] = useState(false);
+  const [isEventDetailOpen, setIsEventDetailOpen] = useState(false);
 
   const { data: events = [], isLoading } = useQuery<Event[]>({
     queryKey: ["/api/events"],
@@ -69,6 +71,30 @@ export default function CalendarView() {
   const upcomingEvents = events
     .filter(event => new Date(event.startDate) >= new Date())
     .slice(0, 3);
+
+  const handleEventClick = (event: Event) => {
+    setSelectedEvent(event);
+    setIsEventDetailOpen(true);
+  };
+
+  const getCategoryDisplayName = (category: string) => {
+    switch (category) {
+      case "games":
+        return "Game";
+      case "team-events":
+        return "Team Event";
+      case "practice":
+        return "Practice";
+      case "training":
+        return "Training";
+      case "team-meetings":
+        return "Team Meeting";
+      case "award-ceremonies":
+        return "Award Ceremony";
+      default:
+        return "Event";
+    }
+  };
 
   if (isLoading) {
     return (
@@ -176,8 +202,12 @@ export default function CalendarView() {
                   {dayEvents.slice(0, 2).map((event) => (
                     <div
                       key={event.id}
-                      className={`text-xs px-1 rounded truncate ${getEventColor(event.category)}`}
+                      className={`text-xs px-1 rounded truncate cursor-pointer hover:opacity-80 transition-opacity ${getEventColor(event.category)}`}
                       title={event.title}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEventClick(event);
+                      }}
                     >
                       {event.title}
                     </div>
@@ -205,7 +235,7 @@ export default function CalendarView() {
               <div
                 key={event.id}
                 className="flex items-center space-x-4 p-3 bg-slate-50 rounded-lg hover:bg-slate-100 cursor-pointer transition-colors"
-                onClick={() => setSelectedEvent(event)}
+                onClick={() => handleEventClick(event)}
               >
                 <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${getEventColor(event.category)}`}>
                   <i className={`fas fa-${
@@ -227,6 +257,81 @@ export default function CalendarView() {
           )}
         </div>
       </div>
+
+      {/* Event Detail Modal */}
+      <Dialog open={isEventDetailOpen} onOpenChange={setIsEventDetailOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CalendarIcon className="w-5 h-5 text-columbia" />
+              {selectedEvent?.title}
+            </DialogTitle>
+            <DialogDescription>
+              Event Details
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedEvent && (
+            <div className="space-y-4">
+              {/* Event Category */}
+              <div className="flex items-center gap-2">
+                <Badge className={getEventColor(selectedEvent.category)}>
+                  {getCategoryDisplayName(selectedEvent.category)}
+                </Badge>
+              </div>
+
+              {/* Event Description */}
+              {selectedEvent.description && (
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-2">Description</h4>
+                  <p className="text-gray-600">{selectedEvent.description}</p>
+                </div>
+              )}
+
+              {/* Date and Time */}
+              <div className="flex items-start gap-3">
+                <Clock className="w-5 h-5 text-gray-400 mt-0.5" />
+                <div>
+                  <h4 className="font-medium text-gray-900">Date & Time</h4>
+                  <p className="text-gray-600">
+                    {format(new Date(selectedEvent.startDate), "EEEE, MMMM d, yyyy 'at' h:mm a")}
+                    {selectedEvent.endDate && (
+                      <span> - {format(new Date(selectedEvent.endDate), "h:mm a")}</span>
+                    )}
+                  </p>
+                </div>
+              </div>
+
+              {/* Location */}
+              {selectedEvent.location && (
+                <div className="flex items-start gap-3">
+                  <MapPin className="w-5 h-5 text-gray-400 mt-0.5" />
+                  <div>
+                    <h4 className="font-medium text-gray-900">Location</h4>
+                    <p className="text-gray-600">{selectedEvent.location}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Created By */}
+              {selectedEvent.createdBy && (
+                <div className="flex items-start gap-3">
+                  <User className="w-5 h-5 text-gray-400 mt-0.5" />
+                  <div>
+                    <h4 className="font-medium text-gray-900">Created By</h4>
+                    <p className="text-gray-600">Team Administrator</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Created Date */}
+              <div className="text-sm text-gray-500 pt-2 border-t">
+                Created {format(new Date(selectedEvent.createdAt), "MMM d, yyyy 'at' h:mm a")}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
