@@ -12,7 +12,8 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Users, Edit, Upload, Phone, Mail, User, Camera } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Users, Edit, Upload, Phone, Mail, User, Camera, UserCheck, Trophy, Heart } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -21,6 +22,9 @@ const profileFormSchema = z.object({
   name: z.string().min(1, "Name is required"),
   phoneNumber: z.string().optional(),
   emailAddress: z.string().email("Valid email is required"),
+  teamRole: z.enum(["player", "coach", "parent"]).default("player"),
+  playerNumber: z.string().optional(),
+  playerName: z.string().optional(),
 });
 
 type ProfileFormData = z.infer<typeof profileFormSchema>;
@@ -31,6 +35,9 @@ interface UserProfile {
   phoneNumber?: string | null;
   emailAddress: string;
   profilePhoto?: string | null;
+  teamRole: string;
+  playerNumber?: string | null;
+  playerName?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -68,6 +75,9 @@ export default function Profiles() {
       name: "",
       phoneNumber: "",
       emailAddress: "",
+      teamRole: "player" as const,
+      playerNumber: "",
+      playerName: "",
     }
   });
 
@@ -76,40 +86,31 @@ export default function Profiles() {
       const formData = new FormData();
       formData.append("name", data.name);
       formData.append("emailAddress", data.emailAddress);
+      formData.append("teamRole", data.teamRole);
       if (data.phoneNumber) {
         formData.append("phoneNumber", data.phoneNumber);
+      }
+      if (data.playerNumber) {
+        formData.append("playerNumber", data.playerNumber);
+      }
+      if (data.playerName) {
+        formData.append("playerName", data.playerName);
       }
       if (data.profilePhoto) {
         formData.append("profilePhoto", data.profilePhoto);
       }
       
-      console.log("Frontend: Making API request to /api/profiles");
-      console.log("Frontend: FormData contents:");
-      for (let [key, value] of formData.entries()) {
-        console.log(`  ${key}:`, value);
+      const response = await fetch("/api/profiles", {
+        method: "PUT",
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`${response.status}: ${errorText}`);
       }
       
-      try {
-        const response = await fetch("/api/profiles", {
-          method: "PUT",
-          body: formData,
-        });
-        
-        console.log("Frontend: Response status:", response.status);
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error("Frontend: Error response:", errorText);
-          throw new Error(`${response.status}: ${errorText}`);
-        }
-        
-        const result = await response.json();
-        console.log("Frontend: Success response:", result);
-        return result;
-      } catch (error) {
-        console.error("Frontend: Error response:", error);
-        throw error;
-      }
+      return await response.json();
     },
     onSuccess: () => {
       toast({
@@ -147,19 +148,23 @@ export default function Profiles() {
       profileForm.setValue("name", profile.name);
       profileForm.setValue("phoneNumber", profile.phoneNumber || "");
       profileForm.setValue("emailAddress", profile.emailAddress);
+      profileForm.setValue("teamRole", profile.teamRole as "player" | "coach" | "parent");
+      profileForm.setValue("playerNumber", profile.playerNumber || "");
+      profileForm.setValue("playerName", profile.playerName || "");
     } else {
       // Create new profile for current user
       setSelectedProfile(null);
       profileForm.setValue("name", user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : "");
       profileForm.setValue("phoneNumber", "");
       profileForm.setValue("emailAddress", user?.email || "");
+      profileForm.setValue("teamRole", "player");
+      profileForm.setValue("playerNumber", "");
+      profileForm.setValue("playerName", "");
     }
     setIsEditProfileOpen(true);
   };
 
   const onSubmit = (data: ProfileFormData) => {
-    console.log("Frontend: Form submitted with data:", data);
-    console.log("Frontend: Selected file:", selectedFile);
     updateProfileMutation.mutate({
       ...data,
       profilePhoto: selectedFile || undefined,
@@ -310,6 +315,28 @@ export default function Profiles() {
                         </Badge>
                       </div>
                       
+                      {/* Team Role Badge */}
+                      <div className="flex items-center gap-2 mb-2">
+                        <Badge variant="outline" className="text-xs">
+                          {profile.teamRole === "player" && <Trophy className="w-3 h-3 mr-1" />}
+                          {profile.teamRole === "coach" && <UserCheck className="w-3 h-3 mr-1" />}
+                          {profile.teamRole === "parent" && <Heart className="w-3 h-3 mr-1" />}
+                          {profile.teamRole === "player" ? "Player" : profile.teamRole === "coach" ? "Coach" : "Parent/Relative"}
+                        </Badge>
+                        {profile.teamRole === "player" && profile.playerNumber && (
+                          <Badge variant="secondary" className="text-xs font-mono">
+                            #{profile.playerNumber}
+                          </Badge>
+                        )}
+                      </div>
+                      
+                      {/* Player Name for roster if different from regular name */}
+                      {profile.teamRole === "player" && profile.playerName && profile.playerName !== profile.name && (
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                          Roster: {profile.playerName}
+                        </div>
+                      )}
+                      
                       <div className="space-y-2">
                         <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
                           <Mail className="w-4 h-4" />
@@ -430,6 +457,79 @@ export default function Profiles() {
                     </FormItem>
                   )}
                 />
+
+                <FormField
+                  control={profileForm.control}
+                  name="teamRole"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Team Role</FormLabel>
+                      <FormControl>
+                        <RadioGroup
+                          onValueChange={field.onChange}
+                          value={field.value}
+                          className="flex flex-col space-y-2"
+                        >
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="player" id="player" />
+                            <Label htmlFor="player" className="flex items-center gap-2">
+                              <Trophy className="w-4 h-4 text-blue-600" />
+                              Player
+                            </Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="coach" id="coach" />
+                            <Label htmlFor="coach" className="flex items-center gap-2">
+                              <UserCheck className="w-4 h-4 text-green-600" />
+                              Coach
+                            </Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="parent" id="parent" />
+                            <Label htmlFor="parent" className="flex items-center gap-2">
+                              <Heart className="w-4 h-4 text-red-600" />
+                              Parent/Relative
+                            </Label>
+                          </div>
+                        </RadioGroup>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Player-specific fields */}
+                {profileForm.watch("teamRole") === "player" && (
+                  <>
+                    <FormField
+                      control={profileForm.control}
+                      name="playerNumber"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Player Number</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter player number" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={profileForm.control}
+                      name="playerName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Player Name (for roster)</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter player name for roster" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </>
+                )}
 
                 <div className="flex justify-end gap-2 pt-4">
                   <Button 

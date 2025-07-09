@@ -115,15 +115,19 @@ Tides Hub is a full-stack web application designed for the Tides Girls Water Pol
 - Static files served from `dist/public/`
 
 ## Changelog
-- July 09, 2025: Profile Management System Completion
+- July 09, 2025: Enhanced Profile Management with Team Roles
   - ✓ Successfully debugged and fixed profile saving functionality after extensive troubleshooting
   - ✓ Resolved database schema mismatch between snake_case and camelCase column naming
   - ✓ Updated profiles table structure to match TypeScript schema definitions
   - ✓ Fixed profile photo upload and storage system with proper file handling
   - ✓ Added API endpoint to serve profile photos with correct content types
   - ✓ Profile creation, editing, and photo display now working correctly for team members
+  - ✓ Added team role selection system: Player, Coach, Parent/Relative
+  - ✓ Implemented conditional player-specific fields: Player Number and Player Name
+  - ✓ Enhanced profile display with role badges and player information visualization
+  - ✓ Updated database schema with new teamRole, playerNumber, and playerName columns
   - ✓ Cleaned up debug logging for production readiness
-  - ✓ Complete profile management workflow fully functional
+  - ✓ Complete enhanced profile management workflow fully functional
 
 - July 08, 2025: Administrator User Management System Completion
   - ✓ Fixed critical bugs in user management API requests (method signature issues)

@@ -67,6 +67,9 @@ export const profiles = pgTable("profiles", {
   phoneNumber: text("phoneNumber"),
   emailAddress: text("emailAddress").notNull(),
   profilePhoto: text("profilePhoto"),
+  teamRole: text("teamRole").notNull().default("player"), // player, coach, parent
+  playerNumber: text("playerNumber"), // only for players
+  playerName: text("playerName"), // only for players
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
@@ -184,6 +187,10 @@ export const insertPhotoSchema = createInsertSchema(photos).omit({
 export const insertProfileSchema = createInsertSchema(profiles).omit({
   createdAt: true,
   updatedAt: true,
+}).extend({
+  teamRole: z.enum(["player", "coach", "parent"]).default("player"),
+  playerNumber: z.string().optional().nullable(),
+  playerName: z.string().optional().nullable(),
 });
 
 // Types
