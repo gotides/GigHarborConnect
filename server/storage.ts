@@ -17,7 +17,7 @@ import {
   permissions,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and } from "drizzle-orm";
+import { eq, and, gte, desc } from "drizzle-orm";
 
 export interface IStorage {
   // User methods for Replit Auth
@@ -42,6 +42,7 @@ export interface IStorage {
   getMessage(id: number): Promise<Message | undefined>;
   createMessage(message: InsertMessage): Promise<Message>;
   markMessageInappropriate(id: number): Promise<boolean>;
+  getRecentAnnouncementMessages(): Promise<Message[]>;
   
   // Photo methods
   getPhotos(): Promise<Photo[]>;
@@ -171,6 +172,28 @@ export class DatabaseStorage implements IStorage {
       .set({ inappropriate: "true" })
       .where(eq(messages.id, id));
     return result.rowCount !== null && result.rowCount > 0;
+  }
+
+  async getRecentAnnouncementMessages(): Promise<Message[]> {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    const recentMessages = await db
+      .select()
+      .from(messages)
+      .where(
+        and(
+          eq(messages.inappropriate, "false"),
+          gte(messages.createdAt, thirtyDaysAgo)
+        )
+      )
+      .orderBy(desc(messages.createdAt))
+      .limit(10);
+    
+    // Filter messages that contain #announcements tag
+    return recentMessages.filter(message => 
+      message.content.toLowerCase().includes('#announcements')
+    );
   }
 
   // Photo methods

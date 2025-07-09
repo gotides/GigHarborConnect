@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday, isSameMonth } from "date-fns";
-import { Plus, ChevronLeft, ChevronRight, Clock, MapPin, User, Calendar as CalendarIcon } from "lucide-react";
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday, isSameMonth, formatDistanceToNow } from "date-fns";
+import { Plus, ChevronLeft, ChevronRight, Clock, MapPin, User, Calendar as CalendarIcon, Megaphone, Hash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import EventForm from "@/components/event-form";
-import type { Event } from "@shared/schema";
+import type { Event, Message } from "@shared/schema";
 
 export default function CalendarView() {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -18,6 +18,10 @@ export default function CalendarView() {
 
   const { data: events = [], isLoading } = useQuery<Event[]>({
     queryKey: ["/api/events"],
+  });
+
+  const { data: announcements = [], isLoading: announcementsLoading } = useQuery<Message[]>({
+    queryKey: ["/api/messages/recent-announcements"],
   });
 
   const monthStart = startOfMonth(currentDate);
@@ -270,6 +274,53 @@ export default function CalendarView() {
                   )}
                 </div>
                 <i className="fas fa-chevron-right text-slate-400"></i>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* Recent Announcements Panel */}
+      <div className="border-t border-slate-200 p-6">
+        <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
+          <Megaphone className="w-5 h-5 text-columbia" />
+          Recent Announcements
+        </h3>
+        <div className="space-y-3">
+          {announcementsLoading ? (
+            <div className="space-y-2">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="animate-pulse bg-slate-200 rounded-lg h-16"></div>
+              ))}
+            </div>
+          ) : announcements.length === 0 ? (
+            <p className="text-slate-500">No recent announcements found.</p>
+          ) : (
+            announcements.map((announcement) => (
+              <div
+                key={announcement.id}
+                className="p-3 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-columbia text-white flex items-center justify-center text-sm font-medium">
+                    {announcement.authorInitials}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-sm font-medium text-slate-800">
+                        {announcement.authorName}
+                      </span>
+                      <Hash className="w-3 h-3 text-blue-600" />
+                      <span className="text-xs text-blue-600 font-medium">announcements</span>
+                      <span className="text-xs text-slate-500">
+                        {formatDistanceToNow(new Date(announcement.createdAt), { addSuffix: true })}
+                      </span>
+                    </div>
+                    <p className="text-sm text-slate-700 break-words">
+                      {announcement.content}
+                    </p>
+                  </div>
+                </div>
               </div>
             ))
           )}

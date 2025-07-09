@@ -160,6 +160,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/messages/recent-announcements", async (req, res) => {
+    try {
+      const messages = await storage.getRecentAnnouncementMessages();
+      res.json(messages);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch recent announcements" });
+    }
+  });
+
   app.post("/api/messages", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
