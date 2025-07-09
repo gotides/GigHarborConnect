@@ -90,10 +90,20 @@ export default function Profiles() {
       }
       
       try {
-        const result = await apiRequest("/api/profiles", {
+        const response = await fetch("/api/profiles", {
           method: "PUT",
           body: formData,
         });
+        
+        console.log("Frontend: Response status:", response.status);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("Frontend: Error response:", errorText);
+          throw new Error(`${response.status}: ${errorText}`);
+        }
+        
+        const result = await response.json();
         console.log("Frontend: Success response:", result);
         return result;
       } catch (error) {
