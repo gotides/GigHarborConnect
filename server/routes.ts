@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage, hasPermission } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { insertEventSchema, insertMessageSchema, insertPhotoSchema, insertProfileSchema } from "@shared/schema";
+import { insertEventSchema, insertMessageSchema, insertPhotoSchema, insertProfileSchema, insertHashtagSchema } from "@shared/schema";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -598,6 +598,122 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Hashtag endpoints  
+  app.get("/api/hashtags", async (req, res) => {
+    try {
+      const hashtags = await storage.getActiveHashtags();
+      res.json(hashtags);
+    } catch (error) {
+      console.error("Error fetching hashtags:", error);
+      res.status(500).json({ message: "Failed to fetch hashtags" });
+    }
+  });
+
+  app.get("/api/admin/hashtags", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!hasPermission(user, 'canManageUsers')) {
+        return res.status(403).json({ message: "Insufficient permissions to manage hashtags" });
+      }
+      
+      const hashtags = await storage.getHashtags();
+      res.json(hashtags);
+    } catch (error) {
+      console.error("Error fetching all hashtags:", error);
+      res.status(500).json({ message: "Failed to fetch hashtags" });
+    }
+  });
+
+  app.post("/api/admin/hashtags", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!hasPermission(user, 'canManageUsers')) {
+        return res.status(403).json({ message: "Insufficient permissions to manage hashtags" });
+      }
+
+      const validatedData = insertHashtagSchema.parse(req.body);
+      const hashtag = await storage.createHashtag(validatedData, userId);
+      res.status(201).json(hashtag);
+    } catch (error) {
+      console.error("Error creating hashtag:", error);
+      res.status(400).json({ message: "Invalid hashtag data", error: (error as Error).message });
+    }
+  });
+
+  app.put("/api/admin/hashtags/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!hasPermission(user, 'canManageUsers')) {
+        return res.status(403).json({ message: "Insufficient permissions to manage hashtags" });
+      }
+
+      const id = parseInt(req.params.id);
+      const validatedData = insertHashtagSchema.partial().parse(req.body);
+      const hashtag = await storage.updateHashtag(id, validatedData);
+      
+      if (!hashtag) {
+        return res.status(404).json({ message: "Hashtag not found" });
+      }
+      
+      res.json(hashtag);
+    } catch (error) {
+      console.error("Error updating hashtag:", error);
+      res.status(400).json({ message: "Invalid hashtag data", error: (error as Error).message });
+    }
+  });
+
+  app.patch("/api/admin/hashtags/:id/toggle", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!hasPermission(user, 'canManageUsers')) {
+        return res.status(403).json({ message: "Insufficient permissions to manage hashtags" });
+      }
+
+      const id = parseInt(req.params.id);
+      const hashtag = await storage.toggleHashtagStatus(id);
+      
+      if (!hashtag) {
+        return res.status(404).json({ message: "Hashtag not found" });
+      }
+      
+      res.json(hashtag);
+    } catch (error) {
+      console.error("Error toggling hashtag status:", error);
+      res.status(500).json({ message: "Failed to toggle hashtag status" });
+    }
+  });
+
+  app.delete("/api/admin/hashtags/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!hasPermission(user, 'canManageUsers')) {
+        return res.status(403).json({ message: "Insufficient permissions to manage hashtags" });
+      }
+
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteHashtag(id);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Hashtag not found" });
+      }
+      
+      res.json({ message: "Hashtag deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting hashtag:", error);
+      res.status(500).json({ message: "Failed to delete hashtag" });
+    }
+  });
+
   // Serve uploaded files
   app.use("/uploads", (req, res, next) => {
     const filepath = path.join(uploadDir, req.path);
@@ -607,8 +723,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(404).json({ message: "File not found" });
     }
   });
-
-
 
   const httpServer = createServer(app);
   return httpServer;

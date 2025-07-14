@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, UserPlus, Shield, Edit, ArrowLeft } from "lucide-react";
+import { Trash2, UserPlus, Shield, Edit, ArrowLeft, Hash, Plus, ToggleLeft, ToggleRight } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
@@ -38,8 +38,14 @@ const updateRoleSchema = z.object({
   role: z.enum(["Administrator", "Editor", "Contributor", "Viewer", "Guest"])
 });
 
+const hashtagSchema = z.object({
+  name: z.string().min(1, "Name is required").regex(/^[a-z0-9-]+$/, "Name can only contain lowercase letters, numbers, and hyphens"),
+  description: z.string().optional(),
+});
+
 type AddUserFormData = z.infer<typeof addUserSchema>;
 type UpdateRoleFormData = z.infer<typeof updateRoleSchema>;
+type HashtagFormData = z.infer<typeof hashtagSchema>;
 
 export default function Admin() {
   const { toast } = useToast();
@@ -48,6 +54,9 @@ export default function Admin() {
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
   const [isEditRoleOpen, setIsEditRoleOpen] = useState(false);
+  const [selectedHashtag, setSelectedHashtag] = useState<any>(null);
+  const [isAddHashtagOpen, setIsAddHashtagOpen] = useState(false);
+  const [isEditHashtagOpen, setIsEditHashtagOpen] = useState(false);
 
   // Redirect if not authenticated or not admin
   useEffect(() => {
@@ -69,6 +78,12 @@ export default function Admin() {
     retry: false,
   });
 
+  const { data: hashtags, isLoading: hashtagsLoading } = useQuery({
+    queryKey: ["/api/admin/hashtags"],
+    enabled: isAuthenticated && user?.role === "Administrator",
+    retry: false,
+  });
+
   const addUserForm = useForm<AddUserFormData>({
     resolver: zodResolver(addUserSchema),
     defaultValues: {
@@ -83,6 +98,22 @@ export default function Admin() {
     resolver: zodResolver(updateRoleSchema),
     defaultValues: {
       role: "Viewer"
+    }
+  });
+
+  const addHashtagForm = useForm<HashtagFormData>({
+    resolver: zodResolver(hashtagSchema),
+    defaultValues: {
+      name: "",
+      description: ""
+    }
+  });
+
+  const editHashtagForm = useForm<HashtagFormData>({
+    resolver: zodResolver(hashtagSchema),
+    defaultValues: {
+      name: "",
+      description: ""
     }
   });
 
@@ -186,6 +217,138 @@ export default function Admin() {
     },
   });
 
+  const addHashtagMutation = useMutation({
+    mutationFn: async (data: HashtagFormData) => {
+      const response = await apiRequest("POST", "/api/admin/hashtags", data);
+      return await response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Hashtag added successfully"
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/hashtags"] });
+      setIsAddHashtagOpen(false);
+      addHashtagForm.reset();
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to add hashtag",
+        variant: "destructive"
+      });
+    },
+  });
+
+  const editHashtagMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: HashtagFormData }) => {
+      const response = await apiRequest("PUT", `/api/admin/hashtags/${id}`, data);
+      return await response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Hashtag updated successfully"
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/hashtags"] });
+      setIsEditHashtagOpen(false);
+      setSelectedHashtag(null);
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to update hashtag",
+        variant: "destructive"
+      });
+    },
+  });
+
+  const toggleHashtagMutation = useMutation({
+    mutationFn: async (hashtagId: number) => {
+      const response = await apiRequest("PATCH", `/api/admin/hashtags/${hashtagId}/toggle`);
+      return await response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Hashtag status updated successfully"
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/hashtags"] });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to update hashtag status",
+        variant: "destructive"
+      });
+    },
+  });
+
+  const deleteHashtagMutation = useMutation({
+    mutationFn: async (hashtagId: number) => {
+      await apiRequest("DELETE", `/api/admin/hashtags/${hashtagId}`);
+      return { success: true };
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Hashtag deleted successfully"
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/hashtags"] });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to delete hashtag",
+        variant: "destructive"
+      });
+    },
+  });
+
   const onAddUser = (data: AddUserFormData) => {
     addUserMutation.mutate(data);
   };
@@ -193,6 +356,16 @@ export default function Admin() {
   const onUpdateRole = (data: UpdateRoleFormData) => {
     if (selectedUser) {
       updateRoleMutation.mutate({ userId: selectedUser.id, role: data.role });
+    }
+  };
+
+  const onAddHashtag = (data: HashtagFormData) => {
+    addHashtagMutation.mutate(data);
+  };
+
+  const onEditHashtag = (data: HashtagFormData) => {
+    if (selectedHashtag) {
+      editHashtagMutation.mutate({ id: selectedHashtag.id, data });
     }
   };
 
@@ -205,6 +378,23 @@ export default function Admin() {
   const handleDeleteUser = (userId: string) => {
     if (confirm("Are you sure you want to remove this user? This action cannot be undone.")) {
       deleteUserMutation.mutate(userId);
+    }
+  };
+
+  const handleEditHashtag = (hashtag: any) => {
+    setSelectedHashtag(hashtag);
+    editHashtagForm.setValue("name", hashtag.name);
+    editHashtagForm.setValue("description", hashtag.description || "");
+    setIsEditHashtagOpen(true);
+  };
+
+  const handleToggleHashtag = (hashtagId: number) => {
+    toggleHashtagMutation.mutate(hashtagId);
+  };
+
+  const handleDeleteHashtag = (hashtagId: number) => {
+    if (confirm("Are you sure you want to delete this hashtag? This action cannot be undone.")) {
+      deleteHashtagMutation.mutate(hashtagId);
     }
   };
 
@@ -422,6 +612,164 @@ export default function Admin() {
               )}
             </CardContent>
           </Card>
+
+          {/* Hashtag Management Card */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Hash className="w-5 h-5" />
+                  Hashtag Management
+                </CardTitle>
+                <CardDescription>
+                  Manage hashtags available for filtering messages in Tide Talk
+                </CardDescription>
+              </div>
+              <Dialog open={isAddHashtagOpen} onOpenChange={setIsAddHashtagOpen}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Hashtag
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Add New Hashtag</DialogTitle>
+                    <DialogDescription>
+                      Create a new hashtag for message filtering
+                    </DialogDescription>
+                  </DialogHeader>
+                  <Form {...addHashtagForm}>
+                    <form onSubmit={addHashtagForm.handleSubmit(onAddHashtag)} className="space-y-4">
+                      <FormField
+                        control={addHashtagForm.control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Name</FormLabel>
+                            <FormControl>
+                              <Input 
+                                placeholder="e.g., homework-help" 
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={addHashtagForm.control}
+                        name="description"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Description (Optional)</FormLabel>
+                            <FormControl>
+                              <Input 
+                                placeholder="Brief description of this hashtag"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setIsAddHashtagOpen(false)}
+                        >
+                          Cancel
+                        </Button>
+                        <Button type="submit" disabled={addHashtagMutation.isPending}>
+                          {addHashtagMutation.isPending ? "Adding..." : "Add Hashtag"}
+                        </Button>
+                      </div>
+                    </form>
+                  </Form>
+                </DialogContent>
+              </Dialog>
+            </CardHeader>
+            <CardContent>
+              {hashtagsLoading ? (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">Loading hashtags...</p>
+                </div>
+              ) : hashtags && hashtags.length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Description</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Created By</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {hashtags.map((hashtag: any) => (
+                      <TableRow key={hashtag.id}>
+                        <TableCell className="font-medium">
+                          #{hashtag.name}
+                        </TableCell>
+                        <TableCell>{hashtag.description || "No description"}</TableCell>
+                        <TableCell>
+                          <Badge 
+                            className={hashtag.isActive === "true" 
+                              ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" 
+                              : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
+                            }
+                          >
+                            {hashtag.isActive === "true" ? "Active" : "Inactive"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{hashtag.createdBy || "System"}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleToggleHashtag(hashtag.id)}
+                              title={hashtag.isActive === "true" ? "Deactivate" : "Activate"}
+                            >
+                              {hashtag.isActive === "true" ? (
+                                <ToggleRight className="w-4 h-4" />
+                              ) : (
+                                <ToggleLeft className="w-4 h-4" />
+                              )}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEditHashtag(hashtag)}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDeleteHashtag(hashtag.id)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="text-center py-8">
+                  <Hash className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                  <p className="text-gray-500 mb-4">No hashtags found</p>
+                  <Button onClick={() => setIsAddHashtagOpen(true)}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add First Hashtag
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
 
         {/* Edit Role Dialog */}
@@ -469,6 +817,66 @@ export default function Admin() {
                   </Button>
                   <Button type="submit" disabled={updateRoleMutation.isPending}>
                     {updateRoleMutation.isPending ? "Updating..." : "Update Role"}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Hashtag Dialog */}
+        <Dialog open={isEditHashtagOpen} onOpenChange={setIsEditHashtagOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Hashtag</DialogTitle>
+              <DialogDescription>
+                Update the hashtag information
+              </DialogDescription>
+            </DialogHeader>
+            <Form {...editHashtagForm}>
+              <form onSubmit={editHashtagForm.handleSubmit(onEditHashtag)} className="space-y-4">
+                <FormField
+                  control={editHashtagForm.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Name</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="e.g., homework-help" 
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={editHashtagForm.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description (Optional)</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="Brief description of this hashtag"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="flex justify-end gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsEditHashtagOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={editHashtagMutation.isPending}>
+                    {editHashtagMutation.isPending ? "Updating..." : "Update Hashtag"}
                   </Button>
                 </div>
               </form>

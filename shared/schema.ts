@@ -73,8 +73,18 @@ export const profiles = pgTable("profiles", {
   playerNumber: text("playerNumber"), // only for players
   playerName: text("playerName"), // only for players
   parentPhoneNumber: text("parentphonenumber"), // only for players
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const hashtags = pgTable("hashtags", {
+  id: serial("id").primaryKey(),
+  name: varchar("name").unique().notNull(),
+  description: text("description"),
+  isActive: text("is_active").notNull().default("true"), // true/false as text for consistency
+  createdBy: varchar("created_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 // Role definitions
@@ -196,6 +206,13 @@ export const insertProfileSchema = createInsertSchema(profiles).omit({
   playerName: z.string().optional().nullable(),
 });
 
+export const insertHashtagSchema = createInsertSchema(hashtags).omit({
+  id: true,
+  createdBy: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type UpsertUser = z.infer<typeof upsertUserSchema>;
@@ -207,3 +224,5 @@ export type Photo = typeof photos.$inferSelect;
 export type InsertPhoto = z.infer<typeof insertPhotoSchema>;
 export type Profile = typeof profiles.$inferSelect;
 export type InsertProfile = z.infer<typeof insertProfileSchema>;
+export type Hashtag = typeof hashtags.$inferSelect;
+export type InsertHashtag = z.infer<typeof insertHashtagSchema>;

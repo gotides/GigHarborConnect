@@ -4,6 +4,7 @@ import {
   messages,
   photos,
   profiles,
+  hashtags,
   type User,
   type UpsertUser,
   type Event,
@@ -14,6 +15,8 @@ import {
   type InsertPhoto,
   type Profile,
   type InsertProfile,
+  type Hashtag,
+  type InsertHashtag,
   permissions,
 } from "@shared/schema";
 import { db } from "./db";
@@ -56,6 +59,14 @@ export interface IStorage {
   getProfiles(): Promise<Profile[]>;
   getProfile(userId: string): Promise<Profile | undefined>;
   upsertProfile(profile: InsertProfile): Promise<Profile>;
+  
+  // Hashtag methods
+  getHashtags(): Promise<Hashtag[]>;
+  getActiveHashtags(): Promise<Hashtag[]>;
+  createHashtag(hashtag: InsertHashtag, userId: string): Promise<Hashtag>;
+  updateHashtag(id: number, hashtag: Partial<InsertHashtag>): Promise<Hashtag | undefined>;
+  deleteHashtag(id: number): Promise<boolean>;
+  toggleHashtagStatus(id: number): Promise<Hashtag | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -316,6 +327,65 @@ export class DatabaseStorage implements IStorage {
       .returning();
     
     return profile;
+  }
+
+  // Hashtag methods
+  async getHashtags(): Promise<Hashtag[]> {
+    return await db.select().from(hashtags).orderBy(hashtags.name);
+  }
+
+  async getActiveHashtags(): Promise<Hashtag[]> {
+    return await db.select().from(hashtags)
+      .where(eq(hashtags.isActive, "true"))
+      .orderBy(hashtags.name);
+  }
+
+  async createHashtag(insertHashtag: InsertHashtag, userId: string): Promise<Hashtag> {
+    const [hashtag] = await db
+      .insert(hashtags)
+      .values({
+        ...insertHashtag,
+        createdBy: userId,
+      })
+      .returning();
+    return hashtag;
+  }
+
+  async updateHashtag(id: number, updateData: Partial<InsertHashtag>): Promise<Hashtag | undefined> {
+    const [hashtag] = await db
+      .update(hashtags)
+      .set({
+        ...updateData,
+        updatedAt: new Date(),
+      })
+      .where(eq(hashtags.id, id))
+      .returning();
+    return hashtag;
+  }
+
+  async deleteHashtag(id: number): Promise<boolean> {
+    const result = await db
+      .delete(hashtags)
+      .where(eq(hashtags.id, id));
+    return result.rowCount !== null && result.rowCount > 0;
+  }
+
+  async toggleHashtagStatus(id: number): Promise<Hashtag | undefined> {
+    // First get the current status
+    const [currentHashtag] = await db.select().from(hashtags).where(eq(hashtags.id, id));
+    if (!currentHashtag) return undefined;
+
+    const newStatus = currentHashtag.isActive === "true" ? "false" : "true";
+    
+    const [hashtag] = await db
+      .update(hashtags)
+      .set({
+        isActive: newStatus,
+        updatedAt: new Date(),
+      })
+      .where(eq(hashtags.id, id))
+      .returning();
+    return hashtag;
   }
 }
 
