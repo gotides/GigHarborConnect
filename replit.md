@@ -115,15 +115,19 @@ Tides Hub is a full-stack web application designed for the Tides Girls Water Pol
 - Static files served from `dist/public/`
 
 ## Changelog
-- July 14, 2025: Added Rotating Photo Display to Events Page
+- July 14, 2025: Added Rotating Photo Display to Events Page and Enhanced Photo Upload Security
   - ✓ Created PhotoCarousel component with automatic 3-second photo rotation
-  - ✓ Integrated rotating photo display into Events page alongside Recent Announcements
+  - ✓ Integrated rotating photo display into Events page above calendar grid with gradient background
   - ✓ Added photo overlay with title, event name, and navigation indicators
   - ✓ Displays photo counter (1/5, 2/5, etc.) and smooth transitions between photos
   - ✓ Responsive layout - side-by-side on large screens, stacked on mobile devices
   - ✓ Handles empty states and loading states gracefully with appropriate messages
   - ✓ Uses actual photos from Team Memories section for authentic team content
   - ✓ Fixed database column naming for parent phone number field in profiles
+  - ✓ Implemented authentication-required photo uploads (Admin/Editor/Contributor only)
+  - ✓ Added uploader name display for each photo in gallery and lightbox views
+  - ✓ Updated photo upload API to automatically track authenticated uploader names
+  - ✓ Enhanced UI to show permission-based upload access with appropriate messaging
 
 - July 09, 2025: Enhanced Profile Management with Team Roles and Recent Announcements Feature
   - ✓ Updated SQL schema documentation with complete DDL export from database

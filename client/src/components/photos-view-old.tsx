@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
+import { apiRequest } from "@/lib/queryClient";
 import { format } from "date-fns";
 import { Upload, CloudUpload, Grid3x3, List, Loader2, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -207,6 +208,20 @@ export default function PhotosView() {
                     Upload Photos
                   </Button>
                 </DialogTrigger>
+            ) : isAuthenticated ? (
+              <div className="text-sm text-slate-500">
+                Only Administrators, Editors, and Contributors can upload photos
+              </div>
+            ) : (
+              <Button 
+                onClick={() => window.location.href = "/api/login"}
+                variant="outline"
+              >
+                Sign In to Upload
+              </Button>
+            )}
+            {canUpload && (
+              <>
                 <DialogContent>
                   <div className="space-y-4">
                     <div>
@@ -241,6 +256,7 @@ export default function PhotosView() {
                           placeholder="Water Polo Game, Practice, etc."
                         />
                       </div>
+
                       <div>
                         <Label>Select Photo</Label>
                         <input
@@ -254,54 +270,41 @@ export default function PhotosView() {
                     </div>
                   </div>
                 </DialogContent>
-              </Dialog>
-            ) : isAuthenticated ? (
-              <div className="text-sm text-slate-500 text-center">
-                <User className="w-4 h-4 mx-auto mb-1" />
-                Only Administrators, Editors, and Contributors can upload photos
-              </div>
-            ) : (
-              <Button 
-                onClick={() => window.location.href = "/api/login"}
-                variant="outline"
-              >
-                Sign In to Upload
-              </Button>
-            )}
+                </Dialog>
+              </>
+            )} 
           </div>
           
-          {/* Drag and Drop Zone - Only show for authorized users */}
-          {canUpload && (
-            <div
-              className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${
-                dragActive ? "border-columbia bg-columbia/10" : "border-slate-300"
-              }`}
-              onDragEnter={handleDrag}
-              onDragLeave={handleDrag}
-              onDragOver={handleDrag}
-              onDrop={handleDrop}
-            >
-              <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CloudUpload className="text-2xl text-slate-400" size={32} />
-              </div>
-              <h3 className="text-lg font-medium text-slate-800 mb-2">Drop photos here</h3>
-              <p className="text-slate-600 mb-4">or click to browse your files</p>
-              <input
-                type="file"
-                multiple
-                accept="image/*"
-                onChange={handleFileSelect}
-                className="hidden"
-                id="photo-upload"
-              />
-              <Label
-                htmlFor="photo-upload"
-                className="cursor-pointer bg-columbia hover:bg-blue-600 text-white px-6 py-2 rounded-lg transition-all inline-block"
-              >
-                Choose Files
-              </Label>
+          {/* Drag and Drop Zone */}
+          <div
+            className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${
+              dragActive ? "border-columbia bg-columbia/10" : "border-slate-300"
+            }`}
+            onDragEnter={handleDrag}
+            onDragLeave={handleDrag}
+            onDragOver={handleDrag}
+            onDrop={handleDrop}
+          >
+            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <CloudUpload className="text-2xl text-slate-400" size={32} />
             </div>
-          )}
+            <h3 className="text-lg font-medium text-slate-800 mb-2">Drop photos here</h3>
+            <p className="text-slate-600 mb-4">or click to browse your files</p>
+            <input
+              type="file"
+              multiple
+              accept="image/*"
+              onChange={handleFileSelect}
+              className="hidden"
+              id="photo-upload"
+            />
+            <Label
+              htmlFor="photo-upload"
+              className="cursor-pointer bg-columbia hover:bg-blue-600 text-white px-6 py-2 rounded-lg transition-all inline-block"
+            >
+              Choose Files
+            </Label>
+          </div>
         </CardContent>
       </Card>
 
@@ -309,20 +312,20 @@ export default function PhotosView() {
       <Card>
         <CardContent className="p-6">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-bold text-slate-800">Photo Gallery</h3>
-            <div className="flex items-center gap-2">
+            <h3 className="text-xl font-bold text-slate-800">Recent Memories</h3>
+            <div className="flex items-center space-x-4">
               <Select value={filter} onValueChange={setFilter}>
-                <SelectTrigger className="w-48">
+                <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Filter by event" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Events</SelectItem>
-                  {Array.from(new Set(photos.map(p => p.event).filter(Boolean))).map(event => (
-                    <SelectItem key={event} value={event!}>{event}</SelectItem>
-                  ))}
+                  <SelectItem value="water-polo">Water Polo</SelectItem>
+                  <SelectItem value="dance">Dances</SelectItem>
+                  <SelectItem value="academic">Academic</SelectItem>
                 </SelectContent>
               </Select>
-              <div className="flex border rounded-lg">
+              <div className="flex space-x-2">
                 <Button variant="outline" size="sm">
                   <Grid3x3 className="w-4 h-4" />
                 </Button>
@@ -365,12 +368,9 @@ export default function PhotosView() {
                           <p className="text-sm font-medium text-slate-800 truncate">
                             {photo.title}
                           </p>
-                          <div className="flex items-center gap-1 text-xs text-slate-600">
-                            <User className="w-3 h-3" />
-                            <span>{photo.uploadedBy}</span>
-                            <span>•</span>
-                            <span>{format(new Date(photo.uploadedAt), "MMM d, yyyy")}</span>
-                          </div>
+                          <p className="text-xs text-slate-600">
+                            {format(new Date(photo.uploadedAt), "MMM d, yyyy")} • by {photo.uploadedBy}
+                          </p>
                         </div>
                       </div>
                     ))}

@@ -275,11 +275,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/photos", upload.single('photo'), async (req, res) => {
+  app.post("/api/photos", isAuthenticated, upload.single('photo'), async (req: any, res) => {
     try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      // Check permissions - only Administrator, Editor, and Contributor can upload photos
+      if (!hasPermission(user, 'canUploadPhotos')) {
+        return res.status(403).json({ message: "Insufficient permissions to upload photos" });
+      }
+
       if (!req.file) {
         return res.status(400).json({ message: "No file uploaded" });
       }
+
+      // Get uploader name from authenticated user
+      const uploaderName = user?.firstName && user?.lastName 
+        ? `${user.firstName} ${user.lastName}` 
+        : user?.firstName || user?.email?.split('@')[0] || 'User';
 
       const photoData = {
         title: req.body.title || req.file.originalname,
@@ -289,14 +302,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         mimeType: req.file.mimetype,
         size: req.file.size,
         event: req.body.event || "",
-        uploadedBy: req.body.uploadedBy || "Anonymous"
+        uploadedBy: uploaderName
       };
 
       const validatedData = insertPhotoSchema.parse(photoData);
       const photo = await storage.createPhoto(validatedData);
       res.status(201).json(photo);
     } catch (error) {
-      res.status(400).json({ message: "Invalid photo data" });
+      console.error("Photo upload error:", error);
+      res.status(400).json({ message: "Invalid photo data", error: (error as Error).message });
     }
   });
 
