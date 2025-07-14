@@ -182,6 +182,15 @@ export default function CalendarView() {
         </div>
       </div>
 
+      {/* Team Photos Carousel */}
+      <div className="border-t border-white/20 p-6 bg-gradient-to-r from-blue-50 to-blue-100">
+        <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
+          <Images className="w-5 h-5 text-columbia" />
+          Team Memories
+        </h3>
+        <PhotoCarousel className="w-full max-w-md mx-auto" />
+      </div>
+
       {/* Calendar Grid */}
       <div className="p-6">
         {/* Weekday Headers */}
@@ -281,64 +290,50 @@ export default function CalendarView() {
         </div>
       </div>
 
-      {/* Recent Announcements and Team Photos Panel */}
+      {/* Recent Announcements Panel */}
       <div className="border-t border-slate-200 p-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Recent Announcements */}
-          <div>
-            <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
-              <Megaphone className="w-5 h-5 text-columbia" />
-              Recent Announcements
-            </h3>
-            <div className="space-y-3">
-              {announcementsLoading ? (
-                <div className="space-y-2">
-                  {Array.from({ length: 3 }).map((_, i) => (
-                    <div key={i} className="animate-pulse bg-slate-200 rounded-lg h-16"></div>
-                  ))}
-                </div>
-              ) : announcements.length === 0 ? (
-                <p className="text-slate-500">No recent announcements found.</p>
-              ) : (
-                announcements.map((announcement) => (
-                  <div
-                    key={announcement.id}
-                    className="p-3 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-full bg-columbia text-white flex items-center justify-center text-sm font-medium">
-                        {announcement.authorInitials}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-sm font-medium text-slate-800">
-                            {announcement.authorName}
-                          </span>
-                          <Hash className="w-3 h-3 text-blue-600" />
-                          <span className="text-xs text-blue-600 font-medium">announcements</span>
-                          <span className="text-xs text-slate-500">
-                            {formatDistanceToNow(new Date(announcement.createdAt), { addSuffix: true })}
-                          </span>
-                        </div>
-                        <p className="text-sm text-slate-700 break-words">
-                          {announcement.content}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
+        <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
+          <Megaphone className="w-5 h-5 text-columbia" />
+          Recent Announcements
+        </h3>
+        <div className="space-y-3">
+          {announcementsLoading ? (
+            <div className="space-y-2">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="animate-pulse bg-slate-200 rounded-lg h-16"></div>
+              ))}
             </div>
-          </div>
-
-          {/* Team Photos Carousel */}
-          <div>
-            <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
-              <Images className="w-5 h-5 text-columbia" />
-              Team Memories
-            </h3>
-            <PhotoCarousel className="w-full" />
-          </div>
+          ) : announcements.length === 0 ? (
+            <p className="text-slate-500">No recent announcements found.</p>
+          ) : (
+            announcements.map((announcement) => (
+              <div
+                key={announcement.id}
+                className="p-3 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-columbia text-white flex items-center justify-center text-sm font-medium">
+                    {announcement.authorInitials}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-sm font-medium text-slate-800">
+                        {announcement.authorName}
+                      </span>
+                      <Hash className="w-3 h-3 text-blue-600" />
+                      <span className="text-xs text-blue-600 font-medium">announcements</span>
+                      <span className="text-xs text-slate-500">
+                        {formatDistanceToNow(new Date(announcement.createdAt), { addSuffix: true })}
+                      </span>
+                    </div>
+                    <p className="text-sm text-slate-700 break-words">
+                      {announcement.content}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
 
