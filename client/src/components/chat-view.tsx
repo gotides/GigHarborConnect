@@ -3,7 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { apiRequest } from "@/lib/queryClient";
 import { format } from "date-fns";
-import { Anchor, Send, Search, Settings, Paperclip, Smile, Flag, Circle, Edit2, Trash2, Check, X } from "lucide-react";
+import { Anchor, Send, Search, Settings, Paperclip, Smile, Flag, Circle, Edit2, Trash2, Check, X, Hash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -41,11 +41,25 @@ function getInitials(name: string): string {
     .slice(0, 2);
 }
 
+// Available hashtags for filtering
+const availableHashtags = [
+  "general",
+  "announcements", 
+  "sports",
+  "homework-help",
+  "events",
+  "games",
+  "practice",
+  "team",
+  "social"
+];
+
 export default function ChatView() {
   const [activeChannel, setActiveChannel] = useState("general");
   const [messageContent, setMessageContent] = useState("");
   const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
   const [editingContent, setEditingContent] = useState("");
+  const [selectedHashtag, setSelectedHashtag] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { user } = useAuth();
@@ -141,8 +155,15 @@ export default function ChatView() {
   const handleSendMessage = () => {
     if (!messageContent.trim()) return;
 
+    let content = messageContent;
+    
+    // Add #general tag if no hashtag is present and we're in general channel
+    if (activeChannel === "general" && !content.includes("#")) {
+      content = `${content} #general`;
+    }
+
     const messageData = {
-      content: messageContent,
+      content,
       channel: activeChannel,
     };
 
@@ -176,6 +197,52 @@ export default function ChatView() {
 
   const getMessageAuthorProfile = (message: Message) => {
     return profiles.find((profile: any) => profile.id === message.authorId);
+  };
+
+  // Extract hashtags from message content
+  const extractHashtags = (content: string): string[] => {
+    const hashtagRegex = /#(\w+)/g;
+    const matches = content.match(hashtagRegex);
+    return matches ? matches.map(tag => tag.slice(1).toLowerCase()) : [];
+  };
+
+  // Filter messages based on selected hashtag
+  const filteredMessages = selectedHashtag 
+    ? messages.filter(message => {
+        const hashtags = extractHashtags(message.content);
+        return hashtags.includes(selectedHashtag);
+      })
+    : messages;
+
+  // Get unique hashtags from all messages
+  const messageHashtags = Array.from(new Set(
+    messages.flatMap(message => extractHashtags(message.content))
+  )).filter(tag => availableHashtags.includes(tag));
+
+  // Render message content with highlighted hashtags
+  const renderMessageContent = (content: string) => {
+    const hashtagRegex = /#(\w+)/g;
+    const parts = content.split(hashtagRegex);
+    
+    return parts.map((part, index) => {
+      if (index % 2 === 1) {
+        // This is a hashtag (captured group)
+        const hashtag = part.toLowerCase();
+        if (availableHashtags.includes(hashtag)) {
+          return (
+            <span
+              key={index}
+              className="inline-block bg-columbia/20 text-columbia px-1.5 py-0.5 rounded text-sm font-medium cursor-pointer hover:bg-columbia/30 transition-colors"
+              onClick={() => setSelectedHashtag(hashtag)}
+            >
+              #{hashtag}
+            </span>
+          );
+        }
+        return `#${part}`;
+      }
+      return part;
+    });
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -286,12 +353,59 @@ export default function ChatView() {
         </div>
       </div>
 
+      {/* Hashtag Filter */}
+      <div className="border-b border-slate-200 p-4 bg-slate-50">
+        <div className="flex items-center gap-2 mb-2">
+          <Hash className="w-4 h-4 text-slate-600" />
+          <span className="text-sm font-medium text-slate-700">Filter by hashtag:</span>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant={selectedHashtag === null ? "default" : "outline"}
+            size="sm"
+            onClick={() => setSelectedHashtag(null)}
+            className={selectedHashtag === null ? "bg-navy text-white" : ""}
+          >
+            All Messages
+          </Button>
+          {messageHashtags.map((hashtag) => (
+            <Button
+              key={hashtag}
+              variant={selectedHashtag === hashtag ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSelectedHashtag(hashtag)}
+              className={`${
+                selectedHashtag === hashtag 
+                  ? "bg-columbia text-white" 
+                  : "bg-white border-slate-300 text-slate-600 hover:bg-slate-100"
+              }`}
+            >
+              #{hashtag}
+            </Button>
+          ))}
+        </div>
+        {selectedHashtag && (
+          <div className="mt-2 text-xs text-slate-500">
+            Showing {filteredMessages.length} message{filteredMessages.length !== 1 ? 's' : ''} with #{selectedHashtag}
+          </div>
+        )}
+      </div>
+
       {/* Chat Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.length === 0 ? (
+        {filteredMessages.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-slate-500">No messages in #{activeChannel} yet.</p>
-            <p className="text-slate-400 text-sm mt-2">Be the first to start the conversation!</p>
+            {selectedHashtag ? (
+              <>
+                <p className="text-slate-500">No messages with #{selectedHashtag} in #{activeChannel}.</p>
+                <p className="text-slate-400 text-sm mt-2">Try a different hashtag or view all messages.</p>
+              </>
+            ) : (
+              <>
+                <p className="text-slate-500">No messages in #{activeChannel} yet.</p>
+                <p className="text-slate-400 text-sm mt-2">Be the first to start the conversation!</p>
+              </>
+            )}
           </div>
         ) : (
           <>
@@ -302,7 +416,7 @@ export default function ChatView() {
               </span>
             </div>
 
-            {messages.map((message) => {
+            {filteredMessages.map((message) => {
               const authorProfile = getMessageAuthorProfile(message);
               return (
               <div key={message.id} className="flex items-start space-x-3 group">
@@ -378,7 +492,9 @@ export default function ChatView() {
                       </div>
                     </div>
                   ) : (
-                    <p className="text-slate-700">{message.content}</p>
+                    <p className="text-slate-700">
+                      {renderMessageContent(message.content)}
+                    </p>
                   )}
                 </div>
                 <div className="opacity-0 group-hover:opacity-100 transition-opacity flex space-x-1">
