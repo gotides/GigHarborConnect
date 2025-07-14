@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday, isSameMonth, formatDistanceToNow } from "date-fns";
-import { Plus, ChevronLeft, ChevronRight, Clock, MapPin, User, Calendar as CalendarIcon, Megaphone, Hash } from "lucide-react";
+import { Plus, ChevronLeft, ChevronRight, Clock, MapPin, User, Calendar as CalendarIcon, Megaphone, Hash, Images } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
