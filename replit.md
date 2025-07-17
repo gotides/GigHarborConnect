@@ -115,6 +115,19 @@ Tides Hub is a full-stack web application designed for the Tides Girls Water Pol
 - Static files served from `dist/public/`
 
 ## Changelog
+- July 17, 2025: Enhanced Authentication Error Handling and Comprehensive Hashtag Management
+  - ✓ Added better error handling for duplicate email constraint violations in authentication
+  - ✓ Implemented user-friendly error messages when manual users try to sign in with Google/OAuth
+  - ✓ Enhanced authentication callback with specific error handling and redirect logic
+  - ✓ Added error alerts to landing and home pages with URL parameter parsing
+  - ✓ Improved admin user creation endpoint with detailed error messages for email conflicts
+  - ✓ Created comprehensive hashtag management system for administrators
+  - ✓ Added hashtags database table with proper schema and seeded initial data
+  - ✓ Implemented complete admin UI for hashtag CRUD operations (add/edit/delete/toggle)
+  - ✓ Added hashtag filtering system with activation/deactivation functionality
+  - ✓ Built hashtag API endpoints with full authentication and permission checks
+  - ✓ Enhanced error handling throughout admin panel with specific messaging
+
 - July 14, 2025: Added Rotating Photo Display to Events Page and Enhanced Photo Upload Security
   - ✓ Created PhotoCarousel component with automatic 3-second photo rotation
   - ✓ Integrated rotating photo display into Events page above calendar grid with gradient background

@@ -1,7 +1,27 @@
-import { Anchor, Calendar, MessageCircle, Camera, Shield, Users } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Anchor, Calendar, MessageCircle, Camera, Shield, Users, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function Landing() {
+  const [authError, setAuthError] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Check for authentication error parameters in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const authErrorType = urlParams.get('auth_error');
+    const errorMessage = urlParams.get('message');
+    
+    if (authErrorType === 'email_exists' && errorMessage) {
+      setAuthError(decodeURIComponent(errorMessage));
+      // Clean up URL parameters
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (urlParams.get('error')) {
+      setAuthError("Authentication failed. Please try again.");
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       {/* Navigation */}
@@ -31,6 +51,18 @@ export default function Landing() {
 
       {/* Hero Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {/* Authentication Error Alert */}
+        {authError && (
+          <div className="mb-8 max-w-2xl mx-auto">
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                {authError}
+              </AlertDescription>
+            </Alert>
+          </div>
+        )}
+        
         <div className="text-center">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
             Welcome to Tides Hub

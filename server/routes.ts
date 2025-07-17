@@ -400,8 +400,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const newUser = await storage.createUser(userData);
       res.status(201).json(newUser);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating user:", error);
+      
+      // Handle duplicate email constraint violation
+      if (error.code === '23505' && error.constraint === 'users_email_key') {
+        return res.status(409).json({ 
+          message: "Email already exists",
+          details: `This email address (${req.body.email}) is already registered. Users with this email should sign in using their existing Google/OAuth account instead of creating a manual account.`
+        });
+      }
+      
+      // Handle other database errors
+      if (error.code && error.code.startsWith('23')) {
+        return res.status(400).json({ 
+          message: "Database constraint violation",
+          details: error.message
+        });
+      }
+      
       res.status(500).json({ message: "Failed to create user" });
     }
   });

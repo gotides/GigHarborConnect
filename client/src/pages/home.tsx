@@ -1,9 +1,10 @@
-import { useState } from "react";
-import { Anchor, LogOut, User as UserIcon, Shield, Users } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Anchor, LogOut, User as UserIcon, Shield, Users, AlertTriangle } from "lucide-react";
 import { SiInstagram } from "react-icons/si";
 import { useAuth } from "@/hooks/useAuth";
 import type { User } from "@shared/schema";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Link } from "wouter";
 import CalendarView from "@/components/calendar-view";
 import ChatView from "@/components/chat-view";
@@ -13,7 +14,24 @@ type TabType = "calendar" | "chat" | "photos";
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<TabType>("calendar");
+  const [authError, setAuthError] = useState<string | null>(null);
   const { user } = useAuth();
+
+  useEffect(() => {
+    // Check for authentication error parameters in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const authErrorType = urlParams.get('auth_error');
+    const errorMessage = urlParams.get('message');
+    
+    if (authErrorType === 'email_exists' && errorMessage) {
+      setAuthError(decodeURIComponent(errorMessage));
+      // Clean up URL parameters
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (urlParams.get('error')) {
+      setAuthError("Authentication failed. Please try again.");
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
 
   const tabs = [
     { id: "calendar" as const, label: "Events", icon: "calendar-alt" },
@@ -139,6 +157,18 @@ export default function Home() {
 
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Authentication Error Alert */}
+        {authError && (
+          <div className="mb-6">
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                {authError}
+              </AlertDescription>
+            </Alert>
+          </div>
+        )}
+        
         {activeTab === "calendar" && <CalendarView />}
         {activeTab === "chat" && <ChatView />}
         {activeTab === "photos" && <PhotosView />}

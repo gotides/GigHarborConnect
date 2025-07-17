@@ -57,13 +57,31 @@ function updateUserSession(
 async function upsertUser(
   claims: any,
 ) {
-  await storage.upsertUser({
-    id: claims["sub"],
-    email: claims["email"],
-    firstName: claims["first_name"],
-    lastName: claims["last_name"],
-    profileImageUrl: claims["profile_image_url"],
-  });
+  try {
+    await storage.upsertUser({
+      id: claims["sub"],
+      email: claims["email"],
+      firstName: claims["first_name"],
+      lastName: claims["last_name"],
+      profileImageUrl: claims["profile_image_url"],
+    });
+  } catch (error: any) {
+    console.error("Error in upsertUser:", error);
+    
+    // Check for duplicate email constraint violation
+    if (error.code === '23505' && error.constraint === 'users_email_key') {
+      const errorMessage = `This email address (${claims["email"]}) is already registered with a manual account. Please sign in using your email and password instead of Google/OAuth. If you forgot your password, please contact an administrator for assistance.`;
+      
+      // Create a custom error that can be handled by the authentication flow
+      const authError = new Error(errorMessage);
+      (authError as any).code = 'EMAIL_ALREADY_EXISTS_MANUAL';
+      (authError as any).email = claims["email"];
+      throw authError;
+    }
+    
+    // Re-throw other errors
+    throw error;
+  }
 }
 
 export async function setupAuth(app: Express) {
@@ -78,10 +96,23 @@ export async function setupAuth(app: Express) {
     tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers,
     verified: passport.AuthenticateCallback
   ) => {
-    const user = {};
-    updateUserSession(user, tokens);
-    await upsertUser(tokens.claims());
-    verified(null, user);
+    try {
+      const user = {};
+      updateUserSession(user, tokens);
+      await upsertUser(tokens.claims());
+      verified(null, user);
+    } catch (error: any) {
+      console.error("Authentication verification error:", error);
+      
+      // Handle specific authentication errors
+      if (error.code === 'EMAIL_ALREADY_EXISTS_MANUAL') {
+        // Pass the error to the verified callback so it can be handled by the failure redirect
+        verified(error, null);
+      } else {
+        // For other errors, also pass to the verified callback
+        verified(error, null);
+      }
+    }
   };
 
   for (const domain of process.env
@@ -109,9 +140,35 @@ export async function setupAuth(app: Express) {
   });
 
   app.get("/api/callback", (req, res, next) => {
-    passport.authenticate(`replitauth:${req.hostname}`, {
-      successReturnToOrRedirect: "/",
-      failureRedirect: "/api/login",
+    passport.authenticate(`replitauth:${req.hostname}`, (err: any, user: any, info: any) => {
+      if (err) {
+        console.error("Authentication callback error:", err);
+        
+        // Handle specific authentication errors
+        if (err.code === 'EMAIL_ALREADY_EXISTS_MANUAL') {
+          // Encode the error message for URL parameters
+          const errorMessage = encodeURIComponent(err.message);
+          return res.redirect(`/?auth_error=email_exists&message=${errorMessage}`);
+        }
+        
+        // For other authentication errors, redirect to login with a generic error
+        return res.redirect("/api/login?error=auth_failed");
+      }
+      
+      if (!user) {
+        return res.redirect("/api/login?error=auth_failed");
+      }
+      
+      // Log the user in
+      req.logIn(user, (err) => {
+        if (err) {
+          console.error("Login error:", err);
+          return res.redirect("/api/login?error=login_failed");
+        }
+        
+        // Successful authentication
+        return res.redirect(req.session?.returnTo || "/");
+      });
     })(req, res, next);
   });
 

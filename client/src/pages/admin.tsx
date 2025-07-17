@@ -131,7 +131,7 @@ export default function Admin() {
       setIsAddUserOpen(false);
       addUserForm.reset();
     },
-    onError: (error) => {
+    onError: (error: any) => {
       if (isUnauthorizedError(error)) {
         toast({
           title: "Unauthorized",
@@ -143,9 +143,28 @@ export default function Admin() {
         }, 500);
         return;
       }
+      
+      // Handle specific error responses
+      let errorMessage = "Failed to add user";
+      
+      // Try to parse error response
+      try {
+        const errorData = JSON.parse(error.message.split(': ')[1]);
+        if (errorData.message === "Email already exists" && errorData.details) {
+          errorMessage = errorData.details;
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        }
+      } catch (e) {
+        // Fall back to generic error if parsing fails
+        if (error.message.includes('409:')) {
+          errorMessage = "This email address is already registered. The user should sign in using their existing account.";
+        }
+      }
+      
       toast({
         title: "Error",
-        description: "Failed to add user",
+        description: errorMessage,
         variant: "destructive"
       });
     },
