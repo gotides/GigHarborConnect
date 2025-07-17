@@ -5,6 +5,7 @@ import {
   photos,
   profiles,
   hashtags,
+  accessRequests,
   type User,
   type UpsertUser,
   type Event,
@@ -17,6 +18,8 @@ import {
   type InsertProfile,
   type Hashtag,
   type InsertHashtag,
+  type AccessRequest,
+  type InsertAccessRequest,
   permissions,
 } from "@shared/schema";
 import { db } from "./db";
@@ -67,6 +70,11 @@ export interface IStorage {
   updateHashtag(id: number, hashtag: Partial<InsertHashtag>): Promise<Hashtag | undefined>;
   deleteHashtag(id: number): Promise<boolean>;
   toggleHashtagStatus(id: number): Promise<Hashtag | undefined>;
+  
+  // Access request methods
+  getAccessRequests(): Promise<AccessRequest[]>;
+  createAccessRequest(request: InsertAccessRequest): Promise<AccessRequest>;
+  updateAccessRequestDisposition(id: number, disposition: string, processedBy: string): Promise<AccessRequest | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -386,6 +394,32 @@ export class DatabaseStorage implements IStorage {
       .where(eq(hashtags.id, id))
       .returning();
     return hashtag;
+  }
+
+  // Access request methods
+  async getAccessRequests(): Promise<AccessRequest[]> {
+    return await db.select().from(accessRequests).orderBy(desc(accessRequests.createdAt));
+  }
+
+  async createAccessRequest(insertRequest: InsertAccessRequest): Promise<AccessRequest> {
+    const [request] = await db
+      .insert(accessRequests)
+      .values(insertRequest)
+      .returning();
+    return request;
+  }
+
+  async updateAccessRequestDisposition(id: number, disposition: string, processedBy: string): Promise<AccessRequest | undefined> {
+    const [request] = await db
+      .update(accessRequests)
+      .set({
+        disposition,
+        processedBy,
+        processedAt: new Date(),
+      })
+      .where(eq(accessRequests.id, id))
+      .returning();
+    return request;
   }
 }
 

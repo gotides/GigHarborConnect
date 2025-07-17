@@ -87,6 +87,19 @@ export const hashtags = pgTable("hashtags", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Access requests table for guests requesting team access
+export const accessRequests = pgTable("access_requests", {
+  id: serial("id").primaryKey(),
+  requesterName: varchar("requester_name", { length: 100 }).notNull(),
+  requesterEmail: varchar("requester_email", { length: 255 }).notNull(),
+  relationship: text("relationship").notNull(), // relationship to team/player
+  reason: text("reason").notNull(), // why they want access
+  disposition: varchar("disposition", { length: 20 }).default("pending"), // pending, granted, denied
+  processedBy: varchar("processed_by"), // admin who processed the request
+  createdAt: timestamp("created_at").defaultNow(),
+  processedAt: timestamp("processed_at"),
+});
+
 // Role definitions
 export const roles = {
   ADMINISTRATOR: "Administrator",
@@ -213,6 +226,13 @@ export const insertHashtagSchema = createInsertSchema(hashtags).omit({
   updatedAt: true,
 });
 
+export const insertAccessRequestSchema = createInsertSchema(accessRequests).omit({
+  id: true,
+  processedBy: true,
+  createdAt: true,
+  processedAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type UpsertUser = z.infer<typeof upsertUserSchema>;
@@ -226,3 +246,5 @@ export type Profile = typeof profiles.$inferSelect;
 export type InsertProfile = z.infer<typeof insertProfileSchema>;
 export type Hashtag = typeof hashtags.$inferSelect;
 export type InsertHashtag = z.infer<typeof insertHashtagSchema>;
+export type AccessRequest = typeof accessRequests.$inferSelect;
+export type InsertAccessRequest = z.infer<typeof insertAccessRequestSchema>;

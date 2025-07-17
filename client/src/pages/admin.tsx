@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, UserPlus, Shield, Edit, ArrowLeft, Hash, Plus, ToggleLeft, ToggleRight } from "lucide-react";
+import { Trash2, UserPlus, Shield, Edit, ArrowLeft, Hash, Plus, ToggleLeft, ToggleRight, UserCheck, Clock, X, Check } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
@@ -80,6 +80,12 @@ export default function Admin() {
 
   const { data: hashtags, isLoading: hashtagsLoading } = useQuery({
     queryKey: ["/api/admin/hashtags"],
+    enabled: isAuthenticated && user?.role === "Administrator",
+    retry: false,
+  });
+
+  const { data: accessRequests, isLoading: accessRequestsLoading } = useQuery({
+    queryKey: ["/api/access-requests"],
     enabled: isAuthenticated && user?.role === "Administrator",
     retry: false,
   });
@@ -368,6 +374,38 @@ export default function Admin() {
     },
   });
 
+  const updateAccessRequestMutation = useMutation({
+    mutationFn: async ({ id, disposition }: { id: number; disposition: string }) => {
+      const response = await apiRequest("PATCH", `/api/access-requests/${id}`, { disposition });
+      return await response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Access request updated successfully"
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/access-requests"] });
+    },
+    onError: (error: any) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to update access request",
+        variant: "destructive"
+      });
+    }
+  });
+
   const onAddUser = (data: AddUserFormData) => {
     addUserMutation.mutate(data);
   };
@@ -414,6 +452,28 @@ export default function Admin() {
   const handleDeleteHashtag = (hashtagId: number) => {
     if (confirm("Are you sure you want to delete this hashtag? This action cannot be undone.")) {
       deleteHashtagMutation.mutate(hashtagId);
+    }
+  };
+
+  const handleUpdateAccessRequest = (id: number, disposition: string) => {
+    updateAccessRequestMutation.mutate({ id, disposition });
+  };
+
+  const getDispositionBadgeColor = (disposition: string) => {
+    switch (disposition) {
+      case "granted": return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
+      case "denied": return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200";
+      case "pending": return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200";
+      default: return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
+    }
+  };
+
+  const getDispositionIcon = (disposition: string) => {
+    switch (disposition) {
+      case "granted": return <Check className="w-4 h-4" />;
+      case "denied": return <X className="w-4 h-4" />;
+      case "pending": return <Clock className="w-4 h-4" />;
+      default: return <Clock className="w-4 h-4" />;
     }
   };
 
@@ -628,6 +688,100 @@ export default function Admin() {
                     ))}
                   </TableBody>
                 </Table>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Access Requests Management Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <UserCheck className="w-5 h-5" />
+                Guest Access Requests
+              </CardTitle>
+              <CardDescription>
+                Review and manage access requests from potential team members
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {accessRequestsLoading ? (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">Loading access requests...</p>
+                </div>
+              ) : accessRequests && accessRequests.length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Relationship</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Submitted</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {accessRequests.map((request: any) => (
+                      <TableRow key={request.id}>
+                        <TableCell className="font-medium">
+                          {request.requesterName}
+                        </TableCell>
+                        <TableCell>{request.requesterEmail}</TableCell>
+                        <TableCell>{request.relationship}</TableCell>
+                        <TableCell>
+                          <Badge className={getDispositionBadgeColor(request.disposition)}>
+                            <span className="flex items-center gap-1">
+                              {getDispositionIcon(request.disposition)}
+                              {request.disposition}
+                            </span>
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {new Date(request.createdAt).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-1">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleUpdateAccessRequest(request.id, "granted")}
+                              disabled={request.disposition === "granted" || updateAccessRequestMutation.isPending}
+                              className="text-green-600 hover:text-green-700"
+                            >
+                              <Check className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleUpdateAccessRequest(request.id, "denied")}
+                              disabled={request.disposition === "denied" || updateAccessRequestMutation.isPending}
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleUpdateAccessRequest(request.id, "pending")}
+                              disabled={request.disposition === "pending" || updateAccessRequestMutation.isPending}
+                              className="text-yellow-600 hover:text-yellow-700"
+                            >
+                              <Clock className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="text-center py-8">
+                  <UserCheck className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                  <p className="text-gray-500 mb-2">No access requests</p>
+                  <p className="text-sm text-gray-400">
+                    Access requests from guests will appear here for review
+                  </p>
+                </div>
               )}
             </CardContent>
           </Card>

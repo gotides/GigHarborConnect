@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import EventForm from "@/components/event-form";
 import PhotoCarousel from "@/components/photo-carousel";
+import GuestAccessRequestForm from "@/components/guest-access-request-form";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import type { Event, Message } from "@shared/schema";
 
@@ -137,22 +138,9 @@ export default function CalendarView() {
     );
   }
 
-  // Show permission denied message for guests
+  // Show permission denied message for guests with access request form
   if (isEventsBlocked) {
-    return (
-      <div className="bg-white rounded-xl shadow-lg p-6">
-        <div className="text-center py-12">
-          <Lock className="w-16 h-16 text-slate-400 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-slate-700 mb-2">Events Access Restricted</h3>
-          <p className="text-slate-500 mb-4">
-            You need team member access to view the event calendar and announcements.
-          </p>
-          <p className="text-sm text-slate-400">
-            Contact a team administrator to request access to the Tides Hub.
-          </p>
-        </div>
-      </div>
-    );
+    return <GuestAccessRequestForm />;
   }
 
   return (

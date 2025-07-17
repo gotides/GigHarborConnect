@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage, hasPermission } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { insertEventSchema, insertMessageSchema, insertPhotoSchema, insertProfileSchema, insertHashtagSchema } from "@shared/schema";
+import { insertEventSchema, insertMessageSchema, insertPhotoSchema, insertProfileSchema, insertHashtagSchema, insertAccessRequestSchema } from "@shared/schema";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -759,6 +759,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.sendFile(filepath);
     } else {
       res.status(404).json({ message: "File not found" });
+    }
+  });
+
+  // Access request endpoints
+  app.post("/api/access-requests", async (req, res) => {
+    try {
+      const { requesterName, requesterEmail, relationship, reason } = req.body;
+      
+      if (!requesterName || !requesterEmail || !relationship || !reason) {
+        return res.status(400).json({ message: "All fields are required" });
+      }
+      
+      const requestData = {
+        requesterName,
+        requesterEmail,
+        relationship,
+        reason,
+        disposition: "pending",
+      };
+      
+      const request = await storage.createAccessRequest(requestData);
+      res.status(201).json(request);
+    } catch (error) {
+      console.error("Error creating access request:", error);
+      res.status(500).json({ message: "Failed to create access request" });
+    }
+  });
+
+  app.get("/api/access-requests", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!hasPermission(user, 'canManageUsers')) {
+        return res.status(403).json({ message: "Insufficient permissions to view access requests" });
+      }
+      
+      const requests = await storage.getAccessRequests();
+      res.json(requests);
+    } catch (error) {
+      console.error("Error fetching access requests:", error);
+      res.status(500).json({ message: "Failed to fetch access requests" });
+    }
+  });
+
+  app.patch("/api/access-requests/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { disposition } = req.body;
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!hasPermission(user, 'canManageUsers')) {
+        return res.status(403).json({ message: "Insufficient permissions to manage access requests" });
+      }
+      
+      if (!['pending', 'granted', 'denied'].includes(disposition)) {
+        return res.status(400).json({ message: "Invalid disposition. Must be 'pending', 'granted', or 'denied'" });
+      }
+      
+      const request = await storage.updateAccessRequestDisposition(id, disposition, userId);
+      if (!request) {
+        return res.status(404).json({ message: "Access request not found" });
+      }
+      
+      res.json(request);
+    } catch (error) {
+      console.error("Error updating access request:", error);
+      res.status(500).json({ message: "Failed to update access request" });
     }
   });
 
