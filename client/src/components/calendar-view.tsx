@@ -2,13 +2,15 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday, isSameMonth, formatDistanceToNow } from "date-fns";
-import { Plus, ChevronLeft, ChevronRight, Clock, MapPin, User, Calendar as CalendarIcon, Megaphone, Hash, Images } from "lucide-react";
+import { Plus, ChevronLeft, ChevronRight, Clock, MapPin, User, Calendar as CalendarIcon, Megaphone, Hash, Images, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import EventForm from "@/components/event-form";
 import PhotoCarousel from "@/components/photo-carousel";
+import { isUnauthorizedError } from "@/lib/authUtils";
 import type { Event, Message } from "@shared/schema";
 
 export default function CalendarView() {
@@ -17,12 +19,14 @@ export default function CalendarView() {
   const [isEventFormOpen, setIsEventFormOpen] = useState(false);
   const [isEventDetailOpen, setIsEventDetailOpen] = useState(false);
 
-  const { data: events = [], isLoading } = useQuery<Event[]>({
+  const { data: events = [], isLoading, error: eventsError } = useQuery<Event[]>({
     queryKey: ["/api/events"],
+    retry: false,
   });
 
-  const { data: announcements = [], isLoading: announcementsLoading } = useQuery<Message[]>({
+  const { data: announcements = [], isLoading: announcementsLoading, error: announcementsError } = useQuery<Message[]>({
     queryKey: ["/api/messages/recent-announcements"],
+    retry: false,
   });
 
   const monthStart = startOfMonth(currentDate);
@@ -114,6 +118,10 @@ export default function CalendarView() {
     }
   };
 
+  // Check for permission errors
+  const isEventsBlocked = eventsError && (eventsError.message.includes('403') || eventsError.message.includes('Insufficient permissions'));
+  const isAnnouncementsBlocked = announcementsError && (announcementsError.message.includes('403') || announcementsError.message.includes('Insufficient permissions'));
+
   if (isLoading) {
     return (
       <div className="bg-white rounded-xl shadow-lg p-6">
@@ -124,6 +132,24 @@ export default function CalendarView() {
               <div key={i} className="h-24 bg-slate-200 rounded"></div>
             ))}
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show permission denied message for guests
+  if (isEventsBlocked) {
+    return (
+      <div className="bg-white rounded-xl shadow-lg p-6">
+        <div className="text-center py-12">
+          <Lock className="w-16 h-16 text-slate-400 mx-auto mb-4" />
+          <h3 className="text-xl font-semibold text-slate-700 mb-2">Events Access Restricted</h3>
+          <p className="text-slate-500 mb-4">
+            You need team member access to view the event calendar and announcements.
+          </p>
+          <p className="text-sm text-slate-400">
+            Contact a team administrator to request access to the Tides Hub.
+          </p>
         </div>
       </div>
     );

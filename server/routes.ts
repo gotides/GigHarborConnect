@@ -150,8 +150,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Messages endpoints
-  app.get("/api/messages", async (req, res) => {
+  app.get("/api/messages", isAuthenticated, async (req: any, res) => {
     try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!hasPermission(user, 'canViewMessages')) {
+        return res.status(403).json({ message: "Insufficient permissions to view messages" });
+      }
+      
       const channel = req.query.channel as string;
       const messages = await storage.getMessages(channel);
       res.json(messages);
@@ -160,8 +167,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/messages/recent-announcements", async (req, res) => {
+  app.get("/api/messages/recent-announcements", isAuthenticated, async (req: any, res) => {
     try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!hasPermission(user, 'canViewMessages')) {
+        return res.status(403).json({ message: "Insufficient permissions to view announcements" });
+      }
+      
       const messages = await storage.getRecentAnnouncementMessages();
       res.json(messages);
     } catch (error) {
@@ -266,8 +280,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Photos endpoints
-  app.get("/api/photos", async (req, res) => {
+  app.get("/api/photos", isAuthenticated, async (req: any, res) => {
     try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!hasPermission(user, 'canViewPhotos')) {
+        return res.status(403).json({ message: "Insufficient permissions to view photos" });
+      }
+      
       const photos = await storage.getPhotos();
       res.json(photos);
     } catch (error) {

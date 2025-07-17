@@ -3,11 +3,13 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { apiRequest } from "@/lib/queryClient";
 import { format } from "date-fns";
-import { Anchor, Send, Search, Settings, Paperclip, Smile, Flag, Circle, Edit2, Trash2, Check, X, Hash } from "lucide-react";
+import { Anchor, Send, Search, Settings, Paperclip, Smile, Flag, Circle, Edit2, Trash2, Check, X, Hash, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { isUnauthorizedError } from "@/lib/authUtils";
 import type { Message } from "@shared/schema";
 
 const channels = [
@@ -64,9 +66,10 @@ export default function ChatView() {
   const { toast } = useToast();
   const { user } = useAuth();
 
-  const { data: messages = [], isLoading } = useQuery<Message[]>({
+  const { data: messages = [], isLoading, error: messagesError } = useQuery<Message[]>({
     queryKey: ["/api/messages", activeChannel],
     refetchInterval: 3000, // Poll every 3 seconds for new messages
+    retry: false,
   });
 
   const { data: profiles = [] } = useQuery({
@@ -256,6 +259,9 @@ export default function ChatView() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Check for permission errors
+  const isMessagesBlocked = messagesError && (messagesError.message.includes('403') || messagesError.message.includes('Insufficient permissions'));
+
   if (isLoading) {
     return (
       <div className="bg-white rounded-xl shadow-lg h-[700px] flex flex-col">
@@ -271,6 +277,26 @@ export default function ChatView() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show permission denied message for guests
+  if (isMessagesBlocked) {
+    return (
+      <div className="bg-white rounded-xl shadow-lg h-[700px] flex flex-col">
+        <div className="p-6 text-center flex-1 flex items-center justify-center">
+          <div>
+            <Lock className="w-16 h-16 text-slate-400 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-slate-700 mb-2">Tide Talk Access Restricted</h3>
+            <p className="text-slate-500 mb-4">
+              You need team member access to participate in team chat channels.
+            </p>
+            <p className="text-sm text-slate-400">
+              Contact a team administrator to request access to join the conversation.
+            </p>
           </div>
         </div>
       </div>

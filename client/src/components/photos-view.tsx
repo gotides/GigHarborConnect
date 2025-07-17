@@ -2,13 +2,14 @@ import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { format } from "date-fns";
-import { Upload, CloudUpload, Grid3x3, List, Loader2, User } from "lucide-react";
+import { Upload, CloudUpload, Grid3x3, List, Loader2, User, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -46,8 +47,9 @@ export default function PhotosView() {
     }
   }, [isAuthenticated, isLoading, isUploadOpen, toast]);
 
-  const { data: photos = [], isLoading: photosLoading } = useQuery<Photo[]>({
+  const { data: photos = [], isLoading: photosLoading, error: photosError } = useQuery<Photo[]>({
     queryKey: ["/api/photos"],
+    retry: false,
   });
 
   const uploadPhotoMutation = useMutation({
@@ -174,6 +176,9 @@ export default function PhotosView() {
     return acc;
   }, {} as Record<string, Photo[]>);
 
+  // Check for permission errors
+  const isPhotosBlocked = photosError && (photosError.message.includes('403') || photosError.message.includes('Insufficient permissions'));
+
   if (photosLoading) {
     return (
       <div className="space-y-6">
@@ -182,6 +187,28 @@ export default function PhotosView() {
             <div className="animate-pulse space-y-4">
               <div className="h-8 bg-slate-200 rounded w-1/3"></div>
               <div className="h-32 bg-slate-200 rounded"></div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Show permission denied message for guests
+  if (isPhotosBlocked) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-center py-12">
+              <Lock className="w-16 h-16 text-slate-400 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-slate-700 mb-2">Team Memories Access Restricted</h3>
+              <p className="text-slate-500 mb-4">
+                You need team member access to view and share team photos.
+              </p>
+              <p className="text-sm text-slate-400">
+                Contact a team administrator to request access to the photo gallery.
+              </p>
             </div>
           </CardContent>
         </Card>
