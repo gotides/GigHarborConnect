@@ -64,7 +64,7 @@ export default function ChatView() {
   const [selectedHashtag, setSelectedHashtag] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, hasPermission } = useAuth();
 
   const { data: messages = [], isLoading, error: messagesError } = useQuery<Message[]>({
     queryKey: ["/api/messages", activeChannel],
@@ -565,35 +565,44 @@ export default function ChatView() {
 
       {/* Message Input */}
       <div className="border-t border-slate-200 p-4">
-        <div className="flex items-center space-x-2">
-          <Button variant="ghost" size="sm" className="text-slate-400 hover:text-slate-600">
-            <Paperclip className="w-4 h-4" />
-          </Button>
-          <div className="flex-1 relative">
-            <Input
-              type="text"
-              placeholder="Share with the team..."
-              value={messageContent}
-              onChange={(e) => setMessageContent(e.target.value)}
-              onKeyPress={handleKeyPress}
-              className="pr-10 bg-slate-100 border-0 focus:ring-2 focus:ring-columbia focus:bg-white"
-            />
+        {hasPermission('canCreateMessages') ? (
+          <div className="flex items-center space-x-2">
+            <Button variant="ghost" size="sm" className="text-slate-400 hover:text-slate-600">
+              <Paperclip className="w-4 h-4" />
+            </Button>
+            <div className="flex-1 relative">
+              <Input
+                type="text"
+                placeholder="Share with the team..."
+                value={messageContent}
+                onChange={(e) => setMessageContent(e.target.value)}
+                onKeyPress={handleKeyPress}
+                className="pr-10 bg-slate-100 border-0 focus:ring-2 focus:ring-columbia focus:bg-white"
+              />
+              <Button
+                variant="ghost"
+                size="sm"
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-columbia"
+              >
+                <Smile className="w-4 h-4" />
+              </Button>
+            </div>
             <Button
-              variant="ghost"
-              size="sm"
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-columbia"
+              onClick={handleSendMessage}
+              disabled={!messageContent.trim() || sendMessageMutation.isPending}
+              className="bg-columbia hover:bg-blue-600 text-white"
             >
-              <Smile className="w-4 h-4" />
+              <Send className="w-4 h-4" />
             </Button>
           </div>
-          <Button
-            onClick={handleSendMessage}
-            disabled={!messageContent.trim() || sendMessageMutation.isPending}
-            className="bg-columbia hover:bg-blue-600 text-white"
-          >
-            <Send className="w-4 h-4" />
-          </Button>
-        </div>
+        ) : (
+          <div className="flex items-center justify-center py-3 px-4 bg-slate-50 rounded-lg border-2 border-dashed border-slate-300">
+            <Lock className="w-4 h-4 text-slate-400 mr-2" />
+            <span className="text-sm text-slate-500">
+              You have view-only access to Tide Talk
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );

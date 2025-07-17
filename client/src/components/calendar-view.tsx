@@ -12,6 +12,7 @@ import EventForm from "@/components/event-form";
 import PhotoCarousel from "@/components/photo-carousel";
 import GuestAccessRequestForm from "@/components/guest-access-request-form";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import { useAuth } from "@/hooks/useAuth";
 import type { Event, Message } from "@shared/schema";
 
 export default function CalendarView() {
@@ -19,6 +20,7 @@ export default function CalendarView() {
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [isEventFormOpen, setIsEventFormOpen] = useState(false);
   const [isEventDetailOpen, setIsEventDetailOpen] = useState(false);
+  const { hasPermission } = useAuth();
 
   const { data: events = [], isLoading, error: eventsError } = useQuery<Event[]>({
     queryKey: ["/api/events"],
@@ -152,17 +154,19 @@ export default function CalendarView() {
             <h2 className="text-2xl font-bold">Tide Calendar</h2>
             <p className="text-blue-100">Navigate your team events</p>
           </div>
-          <Dialog open={isEventFormOpen} onOpenChange={setIsEventFormOpen}>
-            <DialogTrigger asChild>
-              <Button variant="secondary" className="bg-white/20 hover:bg-white/30 text-white border-white/30">
-                <Plus className="w-4 h-4 mr-2" />
-                Add Event
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <EventForm onSuccess={() => setIsEventFormOpen(false)} />
-            </DialogContent>
-          </Dialog>
+          {hasPermission('canCreateEvents') && (
+            <Dialog open={isEventFormOpen} onOpenChange={setIsEventFormOpen}>
+              <DialogTrigger asChild>
+                <Button variant="secondary" className="bg-white/20 hover:bg-white/30 text-white border-white/30">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Event
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <EventForm onSuccess={() => setIsEventFormOpen(false)} />
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
         
         {/* Calendar Controls */}
