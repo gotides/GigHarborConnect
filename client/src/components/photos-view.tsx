@@ -1,15 +1,16 @@
 import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { queryClient } from "@/lib/queryClient";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 import { format } from "date-fns";
-import { Upload, CloudUpload, Grid3x3, List, Loader2, User, Lock } from "lucide-react";
+import { Upload, CloudUpload, Grid3x3, List, Loader2, User, Lock, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -28,10 +29,20 @@ export default function PhotosView() {
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading, hasPermission } = useAuth();
 
   // Check if user has upload permissions
   const canUpload = isAuthenticated && user && ['Administrator', 'Editor', 'Contributor'].includes(user.role);
+  
+  // Check if user can delete photos (admin or owner)
+  const canDeleteAny = hasPermission('canDeletePhotos');
+  const canDeleteOwn = (photo: Photo) => {
+    if (!user) return false;
+    const userName = user.firstName && user.lastName 
+      ? `${user.firstName} ${user.lastName}` 
+      : user.firstName || user.email?.split('@')[0] || 'User';
+    return photo.uploadedBy === userName;
+  };
 
   // Redirect to login if not authenticated and user tries to upload
   useEffect(() => {
@@ -99,6 +110,39 @@ export default function PhotosView() {
       toast({
         title: "Upload failed",
         description: error.message || "There was an error uploading your photo. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deletePhotoMutation = useMutation({
+    mutationFn: async (photoId: number) => {
+      return await apiRequest(`/api/photos/${photoId}`, {
+        method: 'DELETE',
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/photos"] });
+      toast({
+        title: "Photo Deleted",
+        description: "The photo has been successfully deleted.",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Delete Failed",
+        description: error.message || "Failed to delete photo. Please try again.",
         variant: "destructive",
       });
     },
@@ -376,17 +420,60 @@ export default function PhotosView() {
                   <h4 className="text-lg font-semibold text-slate-700 mb-4">{event}</h4>
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {eventPhotos.map((photo) => (
-                      <div
-                        key={photo.id}
-                        className="group cursor-pointer"
-                        onClick={() => setSelectedPhoto(photo)}
-                      >
-                        <div className="aspect-square bg-gray-200 rounded-lg overflow-hidden">
+                      <div key={photo.id} className="group relative">
+                        <div 
+                          className="aspect-square bg-gray-200 rounded-lg overflow-hidden cursor-pointer"
+                          onClick={() => setSelectedPhoto(photo)}
+                        >
                           <img
                             src={`/api/photos/${photo.id}/file`}
                             alt={photo.title}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                           />
+                          {/* Delete Button - Only show for admin or photo owner */}
+                          {(canDeleteAny || canDeleteOwn(photo)) && (
+                            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button 
+                                    variant="destructive" 
+                                    size="sm"
+                                    className="h-8 w-8 p-0 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-lg"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Delete Photo</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Are you sure you want to delete "{photo.title}"? 
+                                      <br />
+                                      <span className="text-red-600 font-medium">Delete cannot be undone.</span>
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => deletePhotoMutation.mutate(photo.id)}
+                                      className="bg-red-600 hover:bg-red-700"
+                                      disabled={deletePhotoMutation.isPending}
+                                    >
+                                      {deletePhotoMutation.isPending ? (
+                                        <>
+                                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                          Deleting...
+                                        </>
+                                      ) : (
+                                        "Delete Photo"
+                                      )}
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
+                          )}
                         </div>
                         <div className="mt-2">
                           <p className="text-sm font-medium text-slate-800 truncate">

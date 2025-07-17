@@ -356,12 +356,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/photos/:id", async (req, res) => {
+  app.delete("/api/photos/:id", isAuthenticated, async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
       const photo = await storage.getPhoto(id);
       if (!photo) {
         return res.status(404).json({ message: "Photo not found" });
+      }
+
+      // Check permissions: Administrator can delete any photo, users can only delete their own photos
+      const isAdmin = hasPermission(user, 'canDeletePhotos');
+      const isOwner = photo.uploadedBy === (user?.firstName && user?.lastName 
+        ? `${user.firstName} ${user.lastName}` 
+        : user?.firstName || user?.email?.split('@')[0] || 'User');
+      
+      if (!isAdmin && !isOwner) {
+        return res.status(403).json({ message: "Insufficient permissions to delete this photo" });
       }
 
       // Delete file from disk
