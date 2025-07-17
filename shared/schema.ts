@@ -163,7 +163,7 @@ export const permissions = {
     canEditEvents: false,
     canDeleteEvents: false,
     canViewEvents: true,
-    canCreateMessages: true,
+    canCreateMessages: false,
     canEditMessages: false,
     canDeleteMessages: false,
     canFlagMessages: false,

@@ -115,7 +115,14 @@ Tides Hub is a full-stack web application designed for the Tides Girls Water Pol
 - Static files served from `dist/public/`
 
 ## Changelog
-- July 17, 2025: Enhanced Authentication Error Handling and Comprehensive Hashtag Management
+- July 17, 2025: Guest Access Request System and Permission Updates
+  - ✓ Created complete guest access request system with database table and API endpoints
+  - ✓ Built GuestAccessRequestForm component with name, email, relationship, and reason fields
+  - ✓ Added access request management to admin panel with disposition controls (pending/granted/denied)
+  - ✓ Integrated guest access form into CalendarView, ChatView, and PhotosView for restricted users
+  - ✓ Added information icon with tooltip for viewing requester reasons in admin panel
+  - ✓ Updated Viewer role permissions to remove ability to create events, messages, and upload photos
+  - ✓ Enhanced Authentication Error Handling and Comprehensive Hashtag Management
   - ✓ Added better error handling for duplicate email constraint violations in authentication
   - ✓ Implemented user-friendly error messages when manual users try to sign in with Google/OAuth
   - ✓ Enhanced authentication callback with specific error handling and redirect logic
