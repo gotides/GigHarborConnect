@@ -11,8 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, UserPlus, Shield, Edit, ArrowLeft, Hash, Plus, ToggleLeft, ToggleRight, UserCheck, Clock, X, Check } from "lucide-react";
+import { Trash2, UserPlus, Shield, Edit, ArrowLeft, Hash, Plus, ToggleLeft, ToggleRight, UserCheck, Clock, X, Check, Info } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -715,6 +716,7 @@ export default function Admin() {
                       <TableHead>Name</TableHead>
                       <TableHead>Email</TableHead>
                       <TableHead>Relationship</TableHead>
+                      <TableHead>Reason</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Submitted</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
@@ -728,6 +730,20 @@ export default function Admin() {
                         </TableCell>
                         <TableCell>{request.requesterEmail}</TableCell>
                         <TableCell>{request.relationship}</TableCell>
+                        <TableCell>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 hover:bg-blue-200 transition-colors">
+                                  <Info className="w-4 h-4 text-blue-600" />
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent side="left" className="max-w-xs">
+                                <p className="text-sm">{request.reason}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </TableCell>
                         <TableCell>
                           <Badge className={getDispositionBadgeColor(request.disposition)}>
                             <span className="flex items-center gap-1">
