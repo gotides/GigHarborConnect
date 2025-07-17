@@ -522,8 +522,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
       
-      // Check if user has permission to view profiles (Administrator, Editor, or Contributor)
-      if (!["Administrator", "Editor", "Contributor"].includes(user?.role || "")) {
+      // Check if user has permission to view profiles (all roles except Guest)
+      if (user?.role === "Guest") {
         return res.status(403).json({ message: "Insufficient permissions to view profiles" });
       }
       
@@ -540,8 +540,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
       
-      // Check if user has permission to view profiles
-      if (!["Administrator", "Editor", "Contributor"].includes(user?.role || "")) {
+      // Check if user has permission to view profiles (all roles except Guest)
+      if (user?.role === "Guest") {
         return res.status(403).json({ message: "Insufficient permissions to view profiles" });
       }
       

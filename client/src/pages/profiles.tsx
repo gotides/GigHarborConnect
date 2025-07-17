@@ -62,12 +62,12 @@ export default function Profiles() {
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  // Redirect if not authenticated or doesn't have proper role
+  // Redirect if not authenticated or is Guest role
   useEffect(() => {
-    if (!isLoading && (!isAuthenticated || !["Administrator", "Editor", "Contributor"].includes(user?.role || ""))) {
+    if (!isLoading && (!isAuthenticated || user?.role === "Guest")) {
       toast({
         title: "Unauthorized",
-        description: "You need Administrator, Editor, or Contributor role to access profiles.",
+        description: "You need to be logged in and have proper access to view profiles.",
         variant: "destructive",
       });
       setTimeout(() => {
@@ -78,7 +78,7 @@ export default function Profiles() {
 
   const { data: profiles, isLoading: profilesLoading } = useQuery<UserProfile[]>({
     queryKey: ["/api/profiles"],
-    enabled: isAuthenticated && ["Administrator", "Editor", "Contributor"].includes(user?.role || ""),
+    enabled: isAuthenticated && user?.role !== "Guest",
     retry: false,
   });
 

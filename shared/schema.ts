@@ -73,8 +73,8 @@ export const profiles = pgTable("profiles", {
   playerNumber: text("playerNumber"), // only for players
   playerName: text("playerName"), // only for players
   parentPhoneNumber: text("parentphonenumber"), // only for players
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  createdAt: timestamp("createdAt").defaultNow(),
+  updatedAt: timestamp("updatedAt").defaultNow(),
 });
 
 export const hashtags = pgTable("hashtags", {
