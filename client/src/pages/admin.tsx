@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Trash2, UserPlus, Shield, Edit, ArrowLeft, Hash, Plus, ToggleLeft, ToggleRight, UserCheck, Clock, X, Check, Info } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -524,9 +525,15 @@ export default function Admin() {
           </Button>
         </div>
 
-        <div className="grid gap-6">
-          {/* Access Requests Management Card */}
-          <Card>
+        <Tabs defaultValue="users" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="users">User Management</TabsTrigger>
+            <TabsTrigger value="hashtags">Hashtag Management</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="users" className="space-y-6">
+            {/* Access Requests Management Card */}
+            <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <UserCheck className="w-5 h-5" />
@@ -801,11 +808,11 @@ export default function Admin() {
               )}
             </CardContent>
           </Card>
+          </TabsContent>
 
-
-
-          {/* Hashtag Management Card */}
-          <Card>
+          <TabsContent value="hashtags" className="space-y-6">
+            {/* Hashtag Management Card */}
+            <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
                 <CardTitle className="flex items-center gap-2">
@@ -961,7 +968,8 @@ export default function Admin() {
               )}
             </CardContent>
           </Card>
-        </div>
+          </TabsContent>
+        </Tabs>
 
         {/* Edit Role Dialog */}
         <Dialog open={isEditRoleOpen} onOpenChange={setIsEditRoleOpen}>
