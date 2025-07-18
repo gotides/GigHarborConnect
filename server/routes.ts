@@ -136,6 +136,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch("/api/events/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!hasPermission(user, 'canEditEvents')) {
+        return res.status(403).json({ message: "Insufficient permissions to edit events" });
+      }
+      
+      const { foodCoordinationNotes } = req.body;
+      
+      const event = await storage.updateEvent(id, { foodCoordinationNotes });
+      if (!event) {
+        return res.status(404).json({ message: "Event not found" });
+      }
+      res.json(event);
+    } catch (error) {
+      console.error("Event patch error:", error);
+      res.status(400).json({ message: "Invalid event data" });
+    }
+  });
+
   app.delete("/api/events/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);

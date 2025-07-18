@@ -134,6 +134,10 @@ Tides Hub is a full-stack web application designed for the Tides Girls Water Pol
   - ✓ Integrated proper data flow between checkbox, dialog, and form submission
   - ✓ Added location (required) and address (optional) fields to meal coordinator information
   - ✓ Updated all validation to require location when food is scheduled
+  - ✓ Added "Signup to Provide Food" button for events with scheduled food
+  - ✓ Created FoodSignupDialog with meal coordinator info display and food coordination notes
+  - ✓ Implemented admin-only editing of food coordination notes with proper permissions
+  - ✓ Added food_coordination_notes column to database schema and updated all DDL files
   
 - July 17, 2025: Photo Delete Functionality Implementation
   - ✓ Added photo deletion functionality with proper permission checks for administrators and photo uploaders
