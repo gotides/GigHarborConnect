@@ -31,9 +31,20 @@ export default function PhotoLightbox({ photo, onClose }: PhotoLightboxProps) {
 
   const deletePhotoMutation = useMutation({
     mutationFn: async (photoId: number) => {
-      return await apiRequest(`/api/photos/${photoId}`, {
+      const response = await fetch(`/api/photos/${photoId}`, {
         method: 'DELETE',
+        credentials: 'include',
       });
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error("401: Unauthorized - Please log in to delete photos");
+        }
+        if (response.status === 403) {
+          throw new Error("403: Insufficient permissions to delete this photo");
+        }
+        throw new Error("Delete failed");
+      }
+      return response.status === 204 ? null : response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/photos"] });

@@ -115,6 +115,15 @@ Tides Hub is a full-stack web application designed for the Tides Girls Water Pol
 - Static files served from `dist/public/`
 
 ## Changelog
+- July 17, 2025: Photo Delete Functionality Implementation
+  - ✓ Added photo deletion functionality with proper permission checks for administrators and photo uploaders
+  - ✓ Implemented confirmation dialog with "Delete Cannot be Undone" warning message
+  - ✓ Added delete buttons to both photo gallery grid view and lightbox modal
+  - ✓ Fixed API request method parameter order issue in delete mutations
+  - ✓ Added proper error handling and loading states for delete operations
+  - ✓ Ensured authentication checks prevent unauthorized photo deletions
+  - ✓ Delete functionality works from both grid hover state and lightbox view
+  
 - July 17, 2025: Guest Access Request System and Permission Updates
   - ✓ Created complete guest access request system with database table and API endpoints
   - ✓ Built GuestAccessRequestForm component with name, email, relationship, and reason fields
