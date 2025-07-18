@@ -34,6 +34,8 @@ CREATE TABLE events (
     meal_coordinator_name TEXT,
     meal_coordinator_email TEXT,
     meal_coordinator_phone TEXT,
+    meal_coordinator_location TEXT,
+    meal_coordinator_address TEXT,
     created_by VARCHAR(255) REFERENCES users(id),
     created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()
 );

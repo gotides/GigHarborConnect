@@ -11,6 +11,8 @@ const mealCoordinatorSchema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Valid email is required"),
   phone: z.string().min(1, "Phone number is required"),
+  location: z.string().min(1, "Location is required"),
+  address: z.string().optional(),
 });
 
 type MealCoordinatorData = z.infer<typeof mealCoordinatorSchema>;
@@ -34,6 +36,8 @@ export default function MealCoordinatorDialog({
       name: "",
       email: "",
       phone: "",
+      location: "",
+      address: "",
     },
   });
 
@@ -100,6 +104,34 @@ export default function MealCoordinatorDialog({
             {form.formState.errors.phone && (
               <p className="text-sm text-red-500 mt-1">
                 {form.formState.errors.phone.message}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <Label htmlFor="coordinatorLocation">Location</Label>
+            <Input
+              id="coordinatorLocation"
+              {...form.register("location")}
+              placeholder="Restaurant name, venue, etc."
+            />
+            {form.formState.errors.location && (
+              <p className="text-sm text-red-500 mt-1">
+                {form.formState.errors.location.message}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <Label htmlFor="coordinatorAddress">Address (Optional)</Label>
+            <Input
+              id="coordinatorAddress"
+              {...form.register("address")}
+              placeholder="123 Main St, City, State 12345"
+            />
+            {form.formState.errors.address && (
+              <p className="text-sm text-red-500 mt-1">
+                {form.formState.errors.address.message}
               </p>
             )}
           </div>

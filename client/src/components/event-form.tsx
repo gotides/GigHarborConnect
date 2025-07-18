@@ -22,9 +22,11 @@ const eventFormSchema = insertEventSchema.extend({
   mealCoordinatorName: z.string().optional(),
   mealCoordinatorEmail: z.string().optional(),
   mealCoordinatorPhone: z.string().optional(),
+  mealCoordinatorLocation: z.string().optional(),
+  mealCoordinatorAddress: z.string().optional(),
 }).refine((data) => {
   if (data.scheduleFood) {
-    return data.mealCoordinatorName && data.mealCoordinatorEmail && data.mealCoordinatorPhone;
+    return data.mealCoordinatorName && data.mealCoordinatorEmail && data.mealCoordinatorPhone && data.mealCoordinatorLocation;
   }
   return true;
 }, {
@@ -55,6 +57,8 @@ export default function EventForm({ onSuccess }: EventFormProps) {
       mealCoordinatorName: "",
       mealCoordinatorEmail: "",
       mealCoordinatorPhone: "",
+      mealCoordinatorLocation: "",
+      mealCoordinatorAddress: "",
     },
   });
 
@@ -68,6 +72,8 @@ export default function EventForm({ onSuccess }: EventFormProps) {
         mealCoordinatorName: data.scheduleFood ? data.mealCoordinatorName : null,
         mealCoordinatorEmail: data.scheduleFood ? data.mealCoordinatorEmail : null,
         mealCoordinatorPhone: data.scheduleFood ? data.mealCoordinatorPhone : null,
+        mealCoordinatorLocation: data.scheduleFood ? data.mealCoordinatorLocation : null,
+        mealCoordinatorAddress: data.scheduleFood ? data.mealCoordinatorAddress : null,
       };
       const response = await apiRequest("POST", "/api/events", eventData);
       return response.json();
@@ -103,6 +109,8 @@ export default function EventForm({ onSuccess }: EventFormProps) {
       form.setValue("mealCoordinatorName", "");
       form.setValue("mealCoordinatorEmail", "");
       form.setValue("mealCoordinatorPhone", "");
+      form.setValue("mealCoordinatorLocation", "");
+      form.setValue("mealCoordinatorAddress", "");
     }
   };
 
@@ -110,10 +118,14 @@ export default function EventForm({ onSuccess }: EventFormProps) {
     name: string;
     email: string;
     phone: string;
+    location: string;
+    address?: string;
   }) => {
     form.setValue("mealCoordinatorName", coordinatorData.name);
     form.setValue("mealCoordinatorEmail", coordinatorData.email);
     form.setValue("mealCoordinatorPhone", coordinatorData.phone);
+    form.setValue("mealCoordinatorLocation", coordinatorData.location);
+    form.setValue("mealCoordinatorAddress", coordinatorData.address || "");
   };
 
   return (
@@ -251,6 +263,8 @@ export default function EventForm({ onSuccess }: EventFormProps) {
                 name: form.watch("mealCoordinatorName") || "",
                 email: form.watch("mealCoordinatorEmail") || "",
                 phone: form.watch("mealCoordinatorPhone") || "",
+                location: form.watch("mealCoordinatorLocation") || "",
+                address: form.watch("mealCoordinatorAddress") || "",
               }
             : undefined
         }

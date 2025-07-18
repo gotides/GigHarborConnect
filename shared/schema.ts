@@ -37,6 +37,8 @@ export const events = pgTable("events", {
   mealCoordinatorName: text("meal_coordinator_name"),
   mealCoordinatorEmail: text("meal_coordinator_email"),
   mealCoordinatorPhone: text("meal_coordinator_phone"),
+  mealCoordinatorLocation: text("meal_coordinator_location"),
+  mealCoordinatorAddress: text("meal_coordinator_address"),
   createdBy: varchar("created_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

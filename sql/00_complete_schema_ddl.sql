@@ -56,6 +56,8 @@ CREATE TABLE events (
     meal_coordinator_name TEXT,  -- meal coordinator name when food is scheduled
     meal_coordinator_email TEXT,  -- meal coordinator email when food is scheduled
     meal_coordinator_phone TEXT,  -- meal coordinator phone when food is scheduled
+    meal_coordinator_location TEXT,  -- meal coordinator location when food is scheduled
+    meal_coordinator_address TEXT,  -- meal coordinator address when food is scheduled (optional)
     created_by VARCHAR(255) REFERENCES users(id),
     created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()
 );

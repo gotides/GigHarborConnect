@@ -435,6 +435,18 @@ export default function CalendarView() {
                               <span className="text-sm font-medium">Phone:</span> {selectedEvent.mealCoordinatorPhone}
                             </>
                           )}
+                          {selectedEvent.mealCoordinatorLocation && (
+                            <>
+                              <br />
+                              <span className="text-sm font-medium">Location:</span> {selectedEvent.mealCoordinatorLocation}
+                            </>
+                          )}
+                          {selectedEvent.mealCoordinatorAddress && (
+                            <>
+                              <br />
+                              <span className="text-sm font-medium">Address:</span> {selectedEvent.mealCoordinatorAddress}
+                            </>
+                          )}
                         </>
                       )}
                     </p>
