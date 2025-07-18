@@ -81,6 +81,11 @@ ALTER TABLE messages
 ADD CONSTRAINT check_inappropriate 
 CHECK (inappropriate IN ('true', 'false'));
 
+-- Boolean-like text validation for events schedule_food
+ALTER TABLE events 
+ADD CONSTRAINT check_schedule_food 
+CHECK (schedule_food IN ('true', 'false'));
+
 -- =============================================================================
 -- PERFORMANCE INDEXES (Optional - add based on query patterns)
 -- =============================================================================

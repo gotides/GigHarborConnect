@@ -52,6 +52,7 @@ CREATE TABLE events (
     end_date TIMESTAMP WITHOUT TIME ZONE,
     location TEXT,
     category TEXT NOT NULL DEFAULT 'games'::text,  -- games, team events, practice, training, team meetings, award ceremonies
+    schedule_food TEXT NOT NULL DEFAULT 'false'::text,  -- true/false as text for consistency
     created_by VARCHAR(255) REFERENCES users(id),
     created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()
 );

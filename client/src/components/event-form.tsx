@@ -11,11 +11,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 
 const eventFormSchema = insertEventSchema.extend({
   startDate: z.string().min(1, "Start date is required"),
   endDate: z.string().optional(),
+  scheduleFood: z.boolean().default(false),
 });
 
 type EventFormData = z.infer<typeof eventFormSchema>;
@@ -36,6 +38,7 @@ export default function EventForm({ onSuccess }: EventFormProps) {
       endDate: "",
       location: "",
       category: "games",
+      scheduleFood: false,
     },
   });
 
@@ -45,6 +48,7 @@ export default function EventForm({ onSuccess }: EventFormProps) {
         ...data,
         startDate: new Date(data.startDate),
         endDate: data.endDate ? new Date(data.endDate) : null,
+        scheduleFood: data.scheduleFood ? "true" : "false", // Convert boolean to string for backend consistency
       };
       const response = await apiRequest("POST", "/api/events", eventData);
       return response.json();
@@ -154,6 +158,17 @@ export default function EventForm({ onSuccess }: EventFormProps) {
               <SelectItem value="award-ceremonies">Award Ceremonies</SelectItem>
             </SelectContent>
           </Select>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="scheduleFood"
+            checked={form.watch("scheduleFood")}
+            onCheckedChange={(checked) => form.setValue("scheduleFood", checked as boolean)}
+          />
+          <Label htmlFor="scheduleFood" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+            Schedule Food
+          </Label>
         </div>
 
         <div className="flex space-x-4 pt-4">

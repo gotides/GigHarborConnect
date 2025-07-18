@@ -115,6 +115,15 @@ Tides Hub is a full-stack web application designed for the Tides Girls Water Pol
 - Static files served from `dist/public/`
 
 ## Changelog
+- July 17, 2025: Schedule Food Checkbox Implementation
+  - ✓ Added persistent "schedule food" checkbox to create event dialog
+  - ✓ Added schedule_food column to events table with default value "false"
+  - ✓ Updated event form schema to include scheduleFood boolean field
+  - ✓ Added checkbox component to event creation form with proper validation
+  - ✓ Updated event detail modal to display food scheduled status with food emoji
+  - ✓ Enhanced upcoming events display to show food scheduled indicator
+  - ✓ All existing events default to no food scheduled to maintain data integrity
+  
 - July 17, 2025: Photo Delete Functionality Implementation
   - ✓ Added photo deletion functionality with proper permission checks for administrators and photo uploaders
   - ✓ Implemented confirmation dialog with "Delete Cannot be Undone" warning message

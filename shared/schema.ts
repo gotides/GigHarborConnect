@@ -33,6 +33,7 @@ export const events = pgTable("events", {
   endDate: timestamp("end_date"),
   location: text("location"),
   category: text("category").notNull().default("games"),
+  scheduleFood: text("schedule_food").notNull().default("false"), // true/false as text for consistency
   createdBy: varchar("created_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

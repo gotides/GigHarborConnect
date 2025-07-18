@@ -294,6 +294,7 @@ export default function CalendarView() {
                   <p className="text-sm text-slate-600">
                     {format(new Date(event.startDate), "MMM d, h:mm a")}
                     {event.location && ` • ${event.location}`}
+                    {event.scheduleFood === "true" && " • 🍽️ Food Scheduled"}
                   </p>
                   {event.createdBy && (
                     <p className="text-xs text-slate-500">
@@ -406,6 +407,17 @@ export default function CalendarView() {
                   <div>
                     <h4 className="font-medium text-gray-900">Location</h4>
                     <p className="text-gray-600">{selectedEvent.location}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Schedule Food Status */}
+              {selectedEvent.scheduleFood === "true" && (
+                <div className="flex items-start gap-3">
+                  <div className="w-5 h-5 text-green-500 mt-0.5">🍽️</div>
+                  <div>
+                    <h4 className="font-medium text-gray-900">Food Scheduled</h4>
+                    <p className="text-gray-600">Food has been scheduled for this event</p>
                   </div>
                 </div>
               )}
