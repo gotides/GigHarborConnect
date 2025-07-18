@@ -211,7 +211,7 @@ export default function ChatView() {
     return matches ? matches.map(tag => tag.slice(1).toLowerCase()) : [];
   };
 
-  // Filter messages based on search query, hashtag, and sort from latest to earliest
+  // Filter messages based on search query, hashtag, and sort from oldest to newest
   const filteredMessages = messages
     .filter(message => {
       // Search filter
@@ -230,7 +230,7 @@ export default function ChatView() {
       
       return true;
     })
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
 
   // Get unique hashtags from all messages
   const messageHashtags = Array.from(new Set(

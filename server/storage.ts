@@ -167,13 +167,13 @@ export class DatabaseStorage implements IStorage {
         .select()
         .from(messages)
         .where(and(eq(messages.channel, channel), eq(messages.inappropriate, "false")))
-        .orderBy(desc(messages.createdAt));
+        .orderBy(messages.createdAt);
     }
     return await db
       .select()
       .from(messages)
       .where(eq(messages.inappropriate, "false"))
-      .orderBy(desc(messages.createdAt));
+      .orderBy(messages.createdAt);
   }
 
   async getMessage(id: number): Promise<Message | undefined> {
