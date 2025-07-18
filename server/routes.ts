@@ -291,6 +291,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/messages/admin-messages", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!hasPermission(user, 'canManageUsers')) {
+        return res.status(403).json({ message: "Insufficient permissions to view admin messages" });
+      }
+      
+      // Get all messages with #administrator hashtag
+      const allMessages = await storage.getMessages();
+      const adminMessages = allMessages
+        .filter(message => 
+          message.content?.includes('#administrator')
+        )
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      
+      res.json(adminMessages);
+    } catch (error) {
+      console.error("Error fetching admin messages:", error);
+      res.status(500).json({ message: "Failed to fetch admin messages" });
+    }
+  });
+
   app.post("/api/messages", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;

@@ -12,13 +12,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trash2, UserPlus, Shield, Edit, ArrowLeft, Hash, Plus, ToggleLeft, ToggleRight, UserCheck, Clock, X, Check, Info } from "lucide-react";
+import { Trash2, UserPlus, Shield, Edit, ArrowLeft, Hash, Plus, ToggleLeft, ToggleRight, UserCheck, Clock, X, Check, Info, MessageSquare, User } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import AdminMessages from "@/components/admin-messages";
 import { useLocation } from "wouter";
 
 const roleOptions = [
@@ -526,9 +527,10 @@ export default function Admin() {
         </div>
 
         <Tabs defaultValue="users" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="users">User Management</TabsTrigger>
             <TabsTrigger value="hashtags">Hashtag Management</TabsTrigger>
+            <TabsTrigger value="messages">Direct Messages</TabsTrigger>
           </TabsList>
           
           <TabsContent value="users" className="space-y-6">
@@ -968,6 +970,24 @@ export default function Admin() {
               )}
             </CardContent>
           </Card>
+          </TabsContent>
+
+          <TabsContent value="messages" className="space-y-6">
+            {/* Direct Messages Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MessageSquare className="w-5 h-5" />
+                  Messages for Administrators
+                </CardTitle>
+                <CardDescription>
+                  Messages sent to administrators via #administrator hashtag in Tide Talk
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <AdminMessages />
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
 
