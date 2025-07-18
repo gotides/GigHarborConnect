@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useEffect } from "react";
 
 const foodSignupSchema = z.object({
   foodCoordinationNotes: z.string().optional(),
@@ -52,6 +53,15 @@ export default function FoodSignupDialog({
       foodCoordinationNotes: initialNotes || "",
     },
   });
+
+  // Reset form values when dialog opens or initialNotes changes
+  useEffect(() => {
+    if (open) {
+      form.reset({
+        foodCoordinationNotes: initialNotes || "",
+      });
+    }
+  }, [open, initialNotes, form]);
 
   const updateFoodNotesMutation = useMutation({
     mutationFn: async (data: { foodCoordinationNotes: string }) => {
