@@ -138,24 +138,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/events/:id", isAuthenticated, async (req: any, res) => {
     try {
+      console.log("PATCH /api/events/:id called with:", { id: req.params.id, body: req.body });
       const id = parseInt(req.params.id);
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
       
+      console.log("User:", user);
+      
       if (!hasPermission(user, 'canEditEvents')) {
+        console.log("Permission denied for user:", user?.role);
         return res.status(403).json({ message: "Insufficient permissions to edit events" });
       }
       
       const { foodCoordinationNotes } = req.body;
+      console.log("Food coordination notes:", foodCoordinationNotes);
       
       const event = await storage.updateEvent(id, { foodCoordinationNotes });
+      console.log("Updated event:", event);
       if (!event) {
         return res.status(404).json({ message: "Event not found" });
       }
       res.json(event);
     } catch (error) {
       console.error("Event patch error:", error);
-      res.status(400).json({ message: "Invalid event data" });
+      res.status(400).json({ message: "Invalid event data", error: (error as Error).message });
     }
   });
 

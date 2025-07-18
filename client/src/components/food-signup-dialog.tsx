@@ -55,9 +55,8 @@ export default function FoodSignupDialog({
 
   const updateFoodNotesMutation = useMutation({
     mutationFn: async (data: { foodCoordinationNotes: string }) => {
-      return await apiRequest(`/api/events/${eventId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ foodCoordinationNotes: data.foodCoordinationNotes }),
+      return await apiRequest('PATCH', `/api/events/${eventId}`, { 
+        foodCoordinationNotes: data.foodCoordinationNotes 
       });
     },
     onSuccess: () => {
