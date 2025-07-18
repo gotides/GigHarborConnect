@@ -530,7 +530,7 @@ export default function Admin() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <UserCheck className="w-5 h-5" />
-                Application Management
+                User Requests
               </CardTitle>
               <CardDescription>
                 Review and manage access requests from potential team members
