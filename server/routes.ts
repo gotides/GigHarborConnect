@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage, hasPermission } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { insertEventSchema, insertMessageSchema, insertPhotoSchema, insertProfileSchema, insertHashtagSchema, insertAccessRequestSchema } from "@shared/schema";
+import { format } from "date-fns";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -26,6 +27,57 @@ const upload = multer({
     }
   }
 });
+
+// Helper function to create food scheduled announcement
+async function createFoodScheduledAnnouncement(event: any, user: any) {
+  try {
+    const eventType = event.category === "games" ? "Game" : 
+                     event.category === "team-events" ? "Team Event" : 
+                     event.category === "practice" ? "Practice" : 
+                     event.category === "training" ? "Training" : 
+                     event.category === "team-meetings" ? "Team Meeting" : 
+                     event.category === "award-ceremonies" ? "Award Ceremony" : 
+                     "Event";
+    
+    const formattedDate = format(new Date(event.startDate), "EEEE, MMMM d, yyyy 'at' h:mm a");
+    
+    let content = `#announcements 🍽️ Food has been scheduled for upcoming ${eventType}!\n\n`;
+    content += `📅 **${event.title}**\n`;
+    content += `🕐 ${formattedDate}\n`;
+    
+    if (event.location) {
+      content += `📍 ${event.location}\n`;
+    }
+    
+    content += `\n👨‍🍳 **Meal Coordinator:** ${event.mealCoordinatorName}\n`;
+    if (event.mealCoordinatorEmail) {
+      content += `📧 ${event.mealCoordinatorEmail}\n`;
+    }
+    if (event.mealCoordinatorPhone) {
+      content += `📞 ${event.mealCoordinatorPhone}\n`;
+    }
+    if (event.mealCoordinatorLocation) {
+      content += `🏠 ${event.mealCoordinatorLocation}\n`;
+    }
+    
+    content += `\n🥗 **Ready to help with food?** Click "Signup to Provide Food" in the event details to coordinate what you'll bring!\n\n`;
+    content += `Let's work together to make sure everyone is well-fed! 🎉`;
+
+    const messageData = {
+      content,
+      channel: "general",
+      authorName: "Tides Hub System",
+      authorId: "system",
+      authorInitials: "TH",
+      authorColor: "hsl(210, 100%, 50%)", // Navy blue for system messages
+    };
+
+    await storage.createMessage(messageData);
+    console.log("Food scheduled announcement created for event:", event.title);
+  } catch (error) {
+    console.error("Failed to create food scheduled announcement:", error);
+  }
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
@@ -106,6 +158,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const validatedData = insertEventSchema.parse(eventData);
       const event = await storage.createEvent(validatedData);
+      
+      // Auto-post announcement for events with scheduled food
+      if (event.scheduleFood === "true" && event.mealCoordinatorName) {
+        await createFoodScheduledAnnouncement(event, user);
+      }
+      
       res.status(201).json(event);
     } catch (error) {
       console.error("Event creation error:", error);
@@ -125,10 +183,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
       
       const validatedData = insertEventSchema.partial().parse(eventData);
+      
+      // Check if food is being added to an existing event
+      const existingEvent = await storage.getEvent(id);
+      const isAddingFood = existingEvent && 
+                          existingEvent.scheduleFood === "false" && 
+                          validatedData.scheduleFood === "true" &&
+                          validatedData.mealCoordinatorName;
+      
       const event = await storage.updateEvent(id, validatedData);
       if (!event) {
         return res.status(404).json({ message: "Event not found" });
       }
+      
+      // Auto-post announcement for newly added food scheduling
+      if (isAddingFood) {
+        await createFoodScheduledAnnouncement(event, undefined);
+      }
+      
       res.json(event);
     } catch (error) {
       console.error("Event update error:", error);
