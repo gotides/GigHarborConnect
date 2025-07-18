@@ -53,7 +53,8 @@ const availableHashtags = [
   "games",
   "practice",
   "team",
-  "social"
+  "social",
+  "administrator"
 ];
 
 export default function ChatView() {
@@ -232,13 +233,26 @@ export default function ChatView() {
     })
     .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
 
-  // Get unique hashtags from all messages
+  // Get unique hashtags from all messages (exclude administrator from public filtering)
   const messageHashtags = Array.from(new Set(
     messages.flatMap(message => extractHashtags(message.content))
-  )).filter(tag => availableHashtags.includes(tag));
+  )).filter(tag => availableHashtags.includes(tag) && tag !== 'administrator');
 
   // Render message content with highlighted hashtags
   const renderMessageContent = (content: string) => {
+    // Check if message contains #administrator hashtag
+    const hasAdministratorTag = content.toLowerCase().includes('#administrator');
+    
+    // If message is for administrators and user is not an administrator, hide content
+    if (hasAdministratorTag && user?.role !== 'Administrator') {
+      return (
+        <div className="flex items-center gap-2 text-slate-500 italic">
+          <Lock className="w-4 h-4" />
+          <span>Message Sent</span>
+        </div>
+      );
+    }
+    
     const hashtagRegex = /#(\w+)/g;
     const parts = content.split(hashtagRegex);
     
@@ -246,12 +260,16 @@ export default function ChatView() {
       if (index % 2 === 1) {
         // This is a hashtag (captured group)
         const hashtag = part.toLowerCase();
-        if (availableHashtags.includes(hashtag)) {
+        if (availableHashtags.includes(hashtag) || hashtag === 'administrator') {
           return (
             <span
               key={index}
-              className="inline-block bg-columbia/20 text-columbia px-1.5 py-0.5 rounded text-sm font-medium cursor-pointer hover:bg-columbia/30 transition-colors"
-              onClick={() => setSelectedHashtag(hashtag)}
+              className={`inline-block px-1.5 py-0.5 rounded text-sm font-medium cursor-pointer transition-colors ${
+                hashtag === 'administrator' 
+                  ? 'bg-red-100 text-red-600 hover:bg-red-200' 
+                  : 'bg-columbia/20 text-columbia hover:bg-columbia/30'
+              }`}
+              onClick={() => hashtag !== 'administrator' && setSelectedHashtag(hashtag)}
             >
               #{hashtag}
             </span>

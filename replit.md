@@ -172,6 +172,17 @@ Tides Hub is a full-stack web application designed for the Tides Girls Water Pol
   - ✓ Built hashtag API endpoints with full authentication and permission checks
   - ✓ Enhanced error handling throughout admin panel with specific messaging
 
+- July 18, 2025: Direct Messages System for Administrators
+  - ✓ Added Direct Messages tab to Application Management page for administrators
+  - ✓ Created AdminMessages component to display messages tagged with #administrator
+  - ✓ Added API endpoint to fetch admin messages with proper permission checks
+  - ✓ Added #administrator hashtag to database for secure communication with team leadership
+  - ✓ Implemented content hiding feature for #administrator messages in Tide Talk
+  - ✓ Messages tagged with #administrator show "Message Sent" to non-administrators
+  - ✓ Full message content remains visible to administrators in both Tide Talk and Direct Messages tab
+  - ✓ Added visual indicators and proper styling for administrator messages (red accents, lock icon)
+  - ✓ Implemented channel filtering and message sorting in admin messages view
+
 - July 14, 2025: Added Rotating Photo Display to Events Page and Enhanced Photo Upload Security
   - ✓ Created PhotoCarousel component with automatic 3-second photo rotation
   - ✓ Integrated rotating photo display into Events page above calendar grid with gradient background
