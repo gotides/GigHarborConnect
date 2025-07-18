@@ -24,6 +24,7 @@ const eventFormSchema = insertEventSchema.extend({
   mealCoordinatorPhone: z.string().optional(),
   mealCoordinatorLocation: z.string().optional(),
   mealCoordinatorAddress: z.string().optional(),
+  foodCoordinationNotes: z.string().optional(),
 }).refine((data) => {
   if (data.scheduleFood) {
     return data.mealCoordinatorName && data.mealCoordinatorEmail && data.mealCoordinatorPhone && data.mealCoordinatorLocation;
@@ -59,6 +60,7 @@ export default function EventForm({ onSuccess }: EventFormProps) {
       mealCoordinatorPhone: "",
       mealCoordinatorLocation: "",
       mealCoordinatorAddress: "",
+      foodCoordinationNotes: "",
     },
   });
 
@@ -74,6 +76,7 @@ export default function EventForm({ onSuccess }: EventFormProps) {
         mealCoordinatorPhone: data.scheduleFood ? data.mealCoordinatorPhone : null,
         mealCoordinatorLocation: data.scheduleFood ? data.mealCoordinatorLocation : null,
         mealCoordinatorAddress: data.scheduleFood ? data.mealCoordinatorAddress : null,
+        foodCoordinationNotes: data.scheduleFood ? data.foodCoordinationNotes : null,
       };
       const response = await apiRequest("POST", "/api/events", eventData);
       return response.json();
@@ -111,6 +114,7 @@ export default function EventForm({ onSuccess }: EventFormProps) {
       form.setValue("mealCoordinatorPhone", "");
       form.setValue("mealCoordinatorLocation", "");
       form.setValue("mealCoordinatorAddress", "");
+      form.setValue("foodCoordinationNotes", "");
     }
   };
 
@@ -126,6 +130,7 @@ export default function EventForm({ onSuccess }: EventFormProps) {
     form.setValue("mealCoordinatorPhone", coordinatorData.phone);
     form.setValue("mealCoordinatorLocation", coordinatorData.location);
     form.setValue("mealCoordinatorAddress", coordinatorData.address || "");
+    form.setValue("foodCoordinationNotes", "");
   };
 
   return (

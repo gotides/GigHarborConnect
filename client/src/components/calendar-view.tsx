@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import EventForm from "@/components/event-form";
 import PhotoCarousel from "@/components/photo-carousel";
 import GuestAccessRequestForm from "@/components/guest-access-request-form";
+import FoodSignupDialog from "@/components/food-signup-dialog";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { useAuth } from "@/hooks/useAuth";
 import type { Event, Message } from "@shared/schema";
@@ -20,6 +21,7 @@ export default function CalendarView() {
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [isEventFormOpen, setIsEventFormOpen] = useState(false);
   const [isEventDetailOpen, setIsEventDetailOpen] = useState(false);
+  const [isFoodSignupOpen, setIsFoodSignupOpen] = useState(false);
   const { hasPermission } = useAuth();
 
   const { data: events = [], isLoading, error: eventsError } = useQuery<Event[]>({
@@ -450,6 +452,17 @@ export default function CalendarView() {
                         </>
                       )}
                     </p>
+                    
+                    {/* Food Signup Button */}
+                    {hasPermission('canViewEvents') && (
+                      <Button
+                        onClick={() => setIsFoodSignupOpen(true)}
+                        className="mt-3 gradient-navy-columbia text-white"
+                        size="sm"
+                      >
+                        Signup to Provide Food
+                      </Button>
+                    )}
                   </div>
                 </div>
               )}
@@ -475,6 +488,22 @@ export default function CalendarView() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Food Signup Dialog */}
+      {selectedEvent && (
+        <FoodSignupDialog
+          open={isFoodSignupOpen}
+          onOpenChange={setIsFoodSignupOpen}
+          eventId={selectedEvent.id}
+          eventTitle={selectedEvent.title}
+          mealCoordinatorName={selectedEvent.mealCoordinatorName || undefined}
+          mealCoordinatorEmail={selectedEvent.mealCoordinatorEmail || undefined}
+          mealCoordinatorPhone={selectedEvent.mealCoordinatorPhone || undefined}
+          mealCoordinatorLocation={selectedEvent.mealCoordinatorLocation || undefined}
+          mealCoordinatorAddress={selectedEvent.mealCoordinatorAddress || undefined}
+          initialNotes={selectedEvent.foodCoordinationNotes || undefined}
+        />
+      )}
     </div>
   );
 }
