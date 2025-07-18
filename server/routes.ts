@@ -237,8 +237,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/events/:id", async (req, res) => {
+  app.delete("/api/events/:id", isAuthenticated, async (req: any, res) => {
     try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!hasPermission(user, 'canDeleteEvents')) {
+        return res.status(403).json({ message: "Insufficient permissions to delete events" });
+      }
+      
       const id = parseInt(req.params.id);
       const deleted = await storage.deleteEvent(id);
       if (!deleted) {

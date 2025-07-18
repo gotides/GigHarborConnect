@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday, isSameMonth, formatDistanceToNow } from "date-fns";
-import { Plus, ChevronLeft, ChevronRight, Clock, MapPin, User, Calendar as CalendarIcon, Megaphone, Hash, Images, Lock } from "lucide-react";
+import { Plus, ChevronLeft, ChevronRight, Clock, MapPin, User, Calendar as CalendarIcon, Megaphone, Hash, Images, Lock, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -14,6 +14,8 @@ import GuestAccessRequestForm from "@/components/guest-access-request-form";
 import FoodSignupDialog from "@/components/food-signup-dialog";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import type { Event, Message } from "@shared/schema";
 
 export default function CalendarView() {
@@ -23,6 +25,7 @@ export default function CalendarView() {
   const [isEventDetailOpen, setIsEventDetailOpen] = useState(false);
   const [isFoodSignupOpen, setIsFoodSignupOpen] = useState(false);
   const { hasPermission } = useAuth();
+  const { toast } = useToast();
 
   const { data: events = [], isLoading, error: eventsError } = useQuery<Event[]>({
     queryKey: ["/api/events"],
@@ -32,6 +35,28 @@ export default function CalendarView() {
   const { data: announcements = [], isLoading: announcementsLoading, error: announcementsError } = useQuery<Message[]>({
     queryKey: ["/api/messages/recent-announcements"],
     retry: false,
+  });
+
+  const deleteEventMutation = useMutation({
+    mutationFn: async (eventId: number) => {
+      return await apiRequest("DELETE", `/api/events/${eventId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/events"] });
+      toast({
+        title: "Success!",
+        description: "Event deleted successfully.",
+      });
+      setIsEventDetailOpen(false);
+      setSelectedEvent(null);
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete event. Please try again.",
+        variant: "destructive",
+      });
+    },
   });
 
   const monthStart = startOfMonth(currentDate);
@@ -120,6 +145,12 @@ export default function CalendarView() {
         return 'Tides Admin';
       default:
         return 'Team Member';
+    }
+  };
+
+  const handleDeleteEvent = () => {
+    if (selectedEvent && window.confirm(`Are you sure you want to delete the event "${selectedEvent.title}"? This action cannot be undone.`)) {
+      deleteEventMutation.mutate(selectedEvent.id);
     }
   };
 
@@ -362,13 +393,28 @@ export default function CalendarView() {
       <Dialog open={isEventDetailOpen} onOpenChange={setIsEventDetailOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <CalendarIcon className="w-5 h-5 text-columbia" />
-              {selectedEvent?.title}
-            </DialogTitle>
-            <DialogDescription>
-              Event Details
-            </DialogDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <DialogTitle className="flex items-center gap-2">
+                  <CalendarIcon className="w-5 h-5 text-columbia" />
+                  {selectedEvent?.title}
+                </DialogTitle>
+                <DialogDescription>
+                  Event Details
+                </DialogDescription>
+              </div>
+              {hasPermission('canDeleteEvents') && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDeleteEvent}
+                  disabled={deleteEventMutation.isPending}
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
           </DialogHeader>
           
           {selectedEvent && (
