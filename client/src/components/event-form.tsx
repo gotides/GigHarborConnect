@@ -13,11 +13,23 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
+import MealCoordinatorDialog from "./meal-coordinator-dialog";
 
 const eventFormSchema = insertEventSchema.extend({
   startDate: z.string().min(1, "Start date is required"),
   endDate: z.string().optional(),
   scheduleFood: z.boolean().default(false),
+  mealCoordinatorName: z.string().optional(),
+  mealCoordinatorEmail: z.string().optional(),
+  mealCoordinatorPhone: z.string().optional(),
+}).refine((data) => {
+  if (data.scheduleFood) {
+    return data.mealCoordinatorName && data.mealCoordinatorEmail && data.mealCoordinatorPhone;
+  }
+  return true;
+}, {
+  message: "Meal coordinator information is required when food is scheduled",
+  path: ["scheduleFood"],
 });
 
 type EventFormData = z.infer<typeof eventFormSchema>;
@@ -28,6 +40,7 @@ interface EventFormProps {
 
 export default function EventForm({ onSuccess }: EventFormProps) {
   const { toast } = useToast();
+  const [showMealCoordinatorDialog, setShowMealCoordinatorDialog] = useState(false);
   
   const form = useForm<EventFormData>({
     resolver: zodResolver(eventFormSchema),
@@ -39,6 +52,9 @@ export default function EventForm({ onSuccess }: EventFormProps) {
       location: "",
       category: "games",
       scheduleFood: false,
+      mealCoordinatorName: "",
+      mealCoordinatorEmail: "",
+      mealCoordinatorPhone: "",
     },
   });
 
@@ -49,6 +65,9 @@ export default function EventForm({ onSuccess }: EventFormProps) {
         startDate: new Date(data.startDate),
         endDate: data.endDate ? new Date(data.endDate) : null,
         scheduleFood: data.scheduleFood ? "true" : "false", // Convert boolean to string for backend consistency
+        mealCoordinatorName: data.scheduleFood ? data.mealCoordinatorName : null,
+        mealCoordinatorEmail: data.scheduleFood ? data.mealCoordinatorEmail : null,
+        mealCoordinatorPhone: data.scheduleFood ? data.mealCoordinatorPhone : null,
       };
       const response = await apiRequest("POST", "/api/events", eventData);
       return response.json();
@@ -73,6 +92,28 @@ export default function EventForm({ onSuccess }: EventFormProps) {
 
   const onSubmit = (data: EventFormData) => {
     createEventMutation.mutate(data);
+  };
+
+  const handleScheduleFoodChange = (checked: boolean) => {
+    form.setValue("scheduleFood", checked);
+    if (checked) {
+      setShowMealCoordinatorDialog(true);
+    } else {
+      // Clear meal coordinator data when unchecking
+      form.setValue("mealCoordinatorName", "");
+      form.setValue("mealCoordinatorEmail", "");
+      form.setValue("mealCoordinatorPhone", "");
+    }
+  };
+
+  const handleMealCoordinatorSave = (coordinatorData: {
+    name: string;
+    email: string;
+    phone: string;
+  }) => {
+    form.setValue("mealCoordinatorName", coordinatorData.name);
+    form.setValue("mealCoordinatorEmail", coordinatorData.email);
+    form.setValue("mealCoordinatorPhone", coordinatorData.phone);
   };
 
   return (
@@ -164,12 +205,22 @@ export default function EventForm({ onSuccess }: EventFormProps) {
           <Checkbox
             id="scheduleFood"
             checked={form.watch("scheduleFood")}
-            onCheckedChange={(checked) => form.setValue("scheduleFood", checked as boolean)}
+            onCheckedChange={handleScheduleFoodChange}
           />
           <Label htmlFor="scheduleFood" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
             Schedule Food
+            {form.watch("scheduleFood") && form.watch("mealCoordinatorName") && (
+              <span className="ml-2 text-xs text-green-600">
+                (Coordinator: {form.watch("mealCoordinatorName")})
+              </span>
+            )}
           </Label>
         </div>
+        {form.formState.errors.scheduleFood && (
+          <p className="text-sm text-red-500 mt-1">
+            {form.formState.errors.scheduleFood.message}
+          </p>
+        )}
 
         <div className="flex space-x-4 pt-4">
           <Button
@@ -189,6 +240,21 @@ export default function EventForm({ onSuccess }: EventFormProps) {
           </Button>
         </div>
       </form>
+
+      <MealCoordinatorDialog
+        open={showMealCoordinatorDialog}
+        onOpenChange={setShowMealCoordinatorDialog}
+        onSave={handleMealCoordinatorSave}
+        initialData={
+          form.watch("mealCoordinatorName") 
+            ? {
+                name: form.watch("mealCoordinatorName") || "",
+                email: form.watch("mealCoordinatorEmail") || "",
+                phone: form.watch("mealCoordinatorPhone") || "",
+              }
+            : undefined
+        }
+      />
     </div>
   );
 }

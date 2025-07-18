@@ -417,7 +417,27 @@ export default function CalendarView() {
                   <div className="w-5 h-5 text-green-500 mt-0.5">🍽️</div>
                   <div>
                     <h4 className="font-medium text-gray-900">Food Scheduled</h4>
-                    <p className="text-gray-600">Food has been scheduled for this event</p>
+                    <p className="text-gray-600">
+                      Food has been scheduled for this event
+                      {selectedEvent.mealCoordinatorName && (
+                        <>
+                          <br />
+                          <span className="text-sm font-medium">Meal Coordinator:</span> {selectedEvent.mealCoordinatorName}
+                          {selectedEvent.mealCoordinatorEmail && (
+                            <>
+                              <br />
+                              <span className="text-sm font-medium">Email:</span> {selectedEvent.mealCoordinatorEmail}
+                            </>
+                          )}
+                          {selectedEvent.mealCoordinatorPhone && (
+                            <>
+                              <br />
+                              <span className="text-sm font-medium">Phone:</span> {selectedEvent.mealCoordinatorPhone}
+                            </>
+                          )}
+                        </>
+                      )}
+                    </p>
                   </div>
                 </div>
               )}

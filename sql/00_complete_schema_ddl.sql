@@ -53,6 +53,9 @@ CREATE TABLE events (
     location TEXT,
     category TEXT NOT NULL DEFAULT 'games'::text,  -- games, team events, practice, training, team meetings, award ceremonies
     schedule_food TEXT NOT NULL DEFAULT 'false'::text,  -- true/false as text for consistency
+    meal_coordinator_name TEXT,  -- meal coordinator name when food is scheduled
+    meal_coordinator_email TEXT,  -- meal coordinator email when food is scheduled
+    meal_coordinator_phone TEXT,  -- meal coordinator phone when food is scheduled
     created_by VARCHAR(255) REFERENCES users(id),
     created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()
 );

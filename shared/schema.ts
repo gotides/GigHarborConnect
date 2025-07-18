@@ -34,6 +34,9 @@ export const events = pgTable("events", {
   location: text("location"),
   category: text("category").notNull().default("games"),
   scheduleFood: text("schedule_food").notNull().default("false"), // true/false as text for consistency
+  mealCoordinatorName: text("meal_coordinator_name"),
+  mealCoordinatorEmail: text("meal_coordinator_email"),
+  mealCoordinatorPhone: text("meal_coordinator_phone"),
   createdBy: varchar("created_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

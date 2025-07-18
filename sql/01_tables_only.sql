@@ -31,6 +31,9 @@ CREATE TABLE events (
     location TEXT,
     category TEXT NOT NULL DEFAULT 'games'::text,
     schedule_food TEXT NOT NULL DEFAULT 'false'::text,
+    meal_coordinator_name TEXT,
+    meal_coordinator_email TEXT,
+    meal_coordinator_phone TEXT,
     created_by VARCHAR(255) REFERENCES users(id),
     created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()
 );
