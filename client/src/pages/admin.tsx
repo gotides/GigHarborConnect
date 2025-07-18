@@ -525,7 +525,116 @@ export default function Admin() {
         </div>
 
         <div className="grid gap-6">
-          {/* Add User Card */}
+          {/* Access Requests Management Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <UserCheck className="w-5 h-5" />
+                Application Management
+              </CardTitle>
+              <CardDescription>
+                Review and manage access requests from potential team members
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {accessRequestsLoading ? (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">Loading access requests...</p>
+                </div>
+              ) : accessRequests && accessRequests.length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Relationship</TableHead>
+                      <TableHead>Reason</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Submitted</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {accessRequests.map((request: any) => (
+                      <TableRow key={request.id}>
+                        <TableCell className="font-medium">
+                          {request.requesterName}
+                        </TableCell>
+                        <TableCell>{request.requesterEmail}</TableCell>
+                        <TableCell>{request.relationship}</TableCell>
+                        <TableCell>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 hover:bg-blue-200 transition-colors">
+                                  <Info className="w-4 h-4 text-blue-600" />
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent side="left" className="max-w-xs">
+                                <p className="text-sm">{request.reason}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={getDispositionBadgeColor(request.disposition)}>
+                            <span className="flex items-center gap-1">
+                              {getDispositionIcon(request.disposition)}
+                              {request.disposition}
+                            </span>
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {new Date(request.createdAt).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-1">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleUpdateAccessRequest(request.id, "granted")}
+                              disabled={request.disposition === "granted" || updateAccessRequestMutation.isPending}
+                              className="text-green-600 hover:text-green-700"
+                            >
+                              <Check className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleUpdateAccessRequest(request.id, "denied")}
+                              disabled={request.disposition === "denied" || updateAccessRequestMutation.isPending}
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleUpdateAccessRequest(request.id, "pending")}
+                              disabled={request.disposition === "pending" || updateAccessRequestMutation.isPending}
+                              className="text-yellow-600 hover:text-yellow-700"
+                            >
+                              <Clock className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="text-center py-8">
+                  <UserCheck className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                  <p className="text-gray-500 mb-2">No access requests</p>
+                  <p className="text-sm text-gray-400">
+                    Access requests from guests will appear here for review
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* User Management Card */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
@@ -693,114 +802,7 @@ export default function Admin() {
             </CardContent>
           </Card>
 
-          {/* Access Requests Management Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <UserCheck className="w-5 h-5" />
-                Guest Access Requests
-              </CardTitle>
-              <CardDescription>
-                Review and manage access requests from potential team members
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {accessRequestsLoading ? (
-                <div className="text-center py-8">
-                  <p className="text-gray-500">Loading access requests...</p>
-                </div>
-              ) : accessRequests && accessRequests.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Relationship</TableHead>
-                      <TableHead>Reason</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Submitted</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {accessRequests.map((request: any) => (
-                      <TableRow key={request.id}>
-                        <TableCell className="font-medium">
-                          {request.requesterName}
-                        </TableCell>
-                        <TableCell>{request.requesterEmail}</TableCell>
-                        <TableCell>{request.relationship}</TableCell>
-                        <TableCell>
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <button className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 hover:bg-blue-200 transition-colors">
-                                  <Info className="w-4 h-4 text-blue-600" />
-                                </button>
-                              </TooltipTrigger>
-                              <TooltipContent side="left" className="max-w-xs">
-                                <p className="text-sm">{request.reason}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={getDispositionBadgeColor(request.disposition)}>
-                            <span className="flex items-center gap-1">
-                              {getDispositionIcon(request.disposition)}
-                              {request.disposition}
-                            </span>
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {new Date(request.createdAt).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-1">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleUpdateAccessRequest(request.id, "granted")}
-                              disabled={request.disposition === "granted" || updateAccessRequestMutation.isPending}
-                              className="text-green-600 hover:text-green-700"
-                            >
-                              <Check className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleUpdateAccessRequest(request.id, "denied")}
-                              disabled={request.disposition === "denied" || updateAccessRequestMutation.isPending}
-                              className="text-red-600 hover:text-red-700"
-                            >
-                              <X className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleUpdateAccessRequest(request.id, "pending")}
-                              disabled={request.disposition === "pending" || updateAccessRequestMutation.isPending}
-                              className="text-yellow-600 hover:text-yellow-700"
-                            >
-                              <Clock className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              ) : (
-                <div className="text-center py-8">
-                  <UserCheck className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                  <p className="text-gray-500 mb-2">No access requests</p>
-                  <p className="text-sm text-gray-400">
-                    Access requests from guests will appear here for review
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+
 
           {/* Hashtag Management Card */}
           <Card>
