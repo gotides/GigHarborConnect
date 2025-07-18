@@ -209,13 +209,14 @@ export default function ChatView() {
     return matches ? matches.map(tag => tag.slice(1).toLowerCase()) : [];
   };
 
-  // Filter messages based on selected hashtag
-  const filteredMessages = selectedHashtag 
+  // Filter messages based on selected hashtag and sort from latest to earliest
+  const filteredMessages = (selectedHashtag 
     ? messages.filter(message => {
         const hashtags = extractHashtags(message.content);
         return hashtags.includes(selectedHashtag);
       })
-    : messages;
+    : messages
+  ).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   // Get unique hashtags from all messages
   const messageHashtags = Array.from(new Set(
@@ -470,7 +471,7 @@ export default function ChatView() {
                       {message.authorName}
                     </span>
                     <span className="text-xs text-slate-500">
-                      {format(new Date(message.createdAt), "h:mm a")}
+                      {format(new Date(message.createdAt), "MMM d, h:mm a")}
                     </span>
                     {message.editedAt && (
                       <span className="text-xs text-slate-400 italic">
