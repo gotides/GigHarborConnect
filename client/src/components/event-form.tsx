@@ -16,8 +16,18 @@ import { useToast } from "@/hooks/use-toast";
 import MealCoordinatorDialog from "./meal-coordinator-dialog";
 
 const eventFormSchema = insertEventSchema.extend({
-  startDate: z.string().min(1, "Start date is required"),
-  endDate: z.string().optional(),
+  startDate: z.string().min(1, "Start date is required").refine((val) => {
+    if (!val) return true;
+    const date = new Date(val);
+    const hours = date.getHours();
+    return hours >= 6 && hours <= 23;
+  }, "Start time must be between 6:00 AM and 11:00 PM"),
+  endDate: z.string().optional().refine((val) => {
+    if (!val) return true;
+    const date = new Date(val);
+    const hours = date.getHours();
+    return hours >= 6 && hours <= 23;
+  }, "End time must be between 6:00 AM and 11:00 PM"),
   scheduleFood: z.boolean().default(false),
   mealCoordinatorName: z.string().optional(),
   mealCoordinatorEmail: z.string().optional(),
@@ -167,7 +177,7 @@ export default function EventForm({ onSuccess }: EventFormProps) {
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="startDate">Start Date & Time</Label>
+            <Label htmlFor="startDate">Start Date & Time *</Label>
             <Input
               id="startDate"
               type="datetime-local"
@@ -178,6 +188,7 @@ export default function EventForm({ onSuccess }: EventFormProps) {
                 {form.formState.errors.startDate.message}
               </p>
             )}
+            <p className="text-xs text-gray-500 mt-1">Time must be between 6:00 AM - 11:00 PM</p>
           </div>
           <div>
             <Label htmlFor="endDate">End Date & Time (Optional)</Label>
@@ -186,6 +197,12 @@ export default function EventForm({ onSuccess }: EventFormProps) {
               type="datetime-local"
               {...form.register("endDate")}
             />
+            {form.formState.errors.endDate && (
+              <p className="text-sm text-red-500 mt-1">
+                {form.formState.errors.endDate.message}
+              </p>
+            )}
+            <p className="text-xs text-gray-500 mt-1">Time must be between 6:00 AM - 11:00 PM</p>
           </div>
         </div>
 
