@@ -62,6 +62,8 @@ export default function ChatView() {
   const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
   const [editingContent, setEditingContent] = useState("");
   const [selectedHashtag, setSelectedHashtag] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { user, hasPermission } = useAuth();
@@ -209,14 +211,26 @@ export default function ChatView() {
     return matches ? matches.map(tag => tag.slice(1).toLowerCase()) : [];
   };
 
-  // Filter messages based on selected hashtag and sort from latest to earliest
-  const filteredMessages = (selectedHashtag 
-    ? messages.filter(message => {
+  // Filter messages based on search query, hashtag, and sort from latest to earliest
+  const filteredMessages = messages
+    .filter(message => {
+      // Search filter
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase();
+        const matchesContent = message.content.toLowerCase().includes(query);
+        const matchesAuthor = message.authorName.toLowerCase().includes(query);
+        if (!matchesContent && !matchesAuthor) return false;
+      }
+      
+      // Hashtag filter
+      if (selectedHashtag) {
         const hashtags = extractHashtags(message.content);
         return hashtags.includes(selectedHashtag);
-      })
-    : messages
-  ).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      }
+      
+      return true;
+    })
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   // Get unique hashtags from all messages
   const messageHashtags = Array.from(new Set(
@@ -350,7 +364,12 @@ export default function ChatView() {
           </div>
         </div>
         <div className="flex items-center space-x-2">
-          <Button variant="ghost" size="sm" className="hover:bg-white/20 text-white">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="hover:bg-white/20 text-white"
+            onClick={() => setIsSearchOpen(!isSearchOpen)}
+          >
             <Search className="w-4 h-4" />
           </Button>
           <Button variant="ghost" size="sm" className="hover:bg-white/20 text-white">
@@ -379,6 +398,39 @@ export default function ChatView() {
           ))}
         </div>
       </div>
+
+      {/* Search Bar */}
+      {isSearchOpen && (
+        <div className="border-b border-slate-200 p-4 bg-slate-50">
+          <div className="flex items-center gap-2">
+            <Search className="w-4 h-4 text-slate-600" />
+            <div className="flex-1 relative">
+              <Input
+                type="text"
+                placeholder="Search messages and authors..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pr-8"
+              />
+              {searchQuery && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
+                  onClick={() => setSearchQuery("")}
+                >
+                  <X className="w-3 h-3" />
+                </Button>
+              )}
+            </div>
+          </div>
+          {searchQuery && (
+            <div className="mt-2 text-xs text-slate-500">
+              Found {filteredMessages.length} message{filteredMessages.length !== 1 ? 's' : ''} matching "{searchQuery}"
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Hashtag Filter */}
       <div className="border-b border-slate-200 p-4 bg-slate-50">
@@ -422,7 +474,12 @@ export default function ChatView() {
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {filteredMessages.length === 0 ? (
           <div className="text-center py-8">
-            {selectedHashtag ? (
+            {searchQuery ? (
+              <>
+                <p className="text-slate-500">No messages found matching "{searchQuery}".</p>
+                <p className="text-slate-400 text-sm mt-2">Try a different search term or clear the search.</p>
+              </>
+            ) : selectedHashtag ? (
               <>
                 <p className="text-slate-500">No messages with #{selectedHashtag} in #{activeChannel}.</p>
                 <p className="text-slate-400 text-sm mt-2">Try a different hashtag or view all messages.</p>
