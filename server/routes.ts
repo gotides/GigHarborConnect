@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage, hasPermission } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { insertEventSchema, insertMessageSchema, insertPhotoSchema, insertProfileSchema, insertHashtagSchema, insertAccessRequestSchema } from "@shared/schema";
+import { insertEventSchema, insertMessageSchema, insertPhotoSchema, insertProfileSchema, insertHashtagSchema, insertAccessRequestSchema, insertImportantDateSchema } from "@shared/schema";
 import { format } from "date-fns";
 import multer from "multer";
 import path from "path";
@@ -973,6 +973,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating access request:", error);
       res.status(500).json({ message: "Failed to update access request" });
+    }
+  });
+
+  // Important dates endpoints
+  app.get("/api/important-dates", async (req, res) => {
+    try {
+      const dates = await storage.getImportantDates();
+      res.json(dates);
+    } catch (error) {
+      console.error("Error fetching important dates:", error);
+      res.status(500).json({ message: "Failed to fetch important dates" });
+    }
+  });
+
+  app.post("/api/important-dates", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!hasPermission(user, 'canCreateEvents')) {
+        return res.status(403).json({ message: "Insufficient permissions to create important dates" });
+      }
+      
+      const dateData = {
+        ...req.body,
+        createdBy: userId,
+      };
+      
+      const validatedData = insertImportantDateSchema.parse(dateData);
+      const date = await storage.createImportantDate(validatedData);
+      res.status(201).json(date);
+    } catch (error) {
+      console.error("Error creating important date:", error);
+      res.status(400).json({ message: "Invalid date data", error: (error as Error).message });
+    }
+  });
+
+  app.put("/api/important-dates/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!hasPermission(user, 'canEditEvents')) {
+        return res.status(403).json({ message: "Insufficient permissions to edit important dates" });
+      }
+      
+      const id = parseInt(req.params.id);
+      const validatedData = insertImportantDateSchema.partial().parse(req.body);
+      const date = await storage.updateImportantDate(id, validatedData);
+      
+      if (!date) {
+        return res.status(404).json({ message: "Important date not found" });
+      }
+      
+      res.json(date);
+    } catch (error) {
+      console.error("Error updating important date:", error);
+      res.status(400).json({ message: "Invalid date data", error: (error as Error).message });
+    }
+  });
+
+  app.delete("/api/important-dates/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!hasPermission(user, 'canDeleteEvents')) {
+        return res.status(403).json({ message: "Insufficient permissions to delete important dates" });
+      }
+      
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteImportantDate(id);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Important date not found" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting important date:", error);
+      res.status(500).json({ message: "Failed to delete important date" });
     }
   });
 

@@ -70,6 +70,17 @@ export const photos = pgTable("photos", {
   uploadedAt: timestamp("uploaded_at").defaultNow().notNull(),
 });
 
+export const importantDates = pgTable("important_dates", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description"),
+  date: timestamp("date").notNull(),
+  category: text("category").notNull().default("general"), // season, meets, equipment, etc.
+  priority: text("priority").notNull().default("normal"), // high, normal, low
+  createdBy: varchar("created_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const profiles = pgTable("profiles", {
   id: varchar("id").primaryKey().references(() => users.id),
   name: text("name").notNull(),
@@ -240,6 +251,12 @@ export const insertAccessRequestSchema = createInsertSchema(accessRequests).omit
   processedAt: true,
 });
 
+export const insertImportantDateSchema = createInsertSchema(importantDates).omit({
+  id: true,
+  createdBy: true,
+  createdAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type UpsertUser = z.infer<typeof upsertUserSchema>;
@@ -255,3 +272,5 @@ export type Hashtag = typeof hashtags.$inferSelect;
 export type InsertHashtag = z.infer<typeof insertHashtagSchema>;
 export type AccessRequest = typeof accessRequests.$inferSelect;
 export type InsertAccessRequest = z.infer<typeof insertAccessRequestSchema>;
+export type ImportantDate = typeof importantDates.$inferSelect;
+export type InsertImportantDate = z.infer<typeof insertImportantDateSchema>;
