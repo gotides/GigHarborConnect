@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
-import { Anchor, Calendar, MessageCircle, Camera, Shield, Users, AlertTriangle, Clock } from "lucide-react";
+import { Anchor, Calendar, MessageCircle, Camera, Shield, Users, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import ImportantDates from "@/components/important-dates-simple";
 
 export default function Landing() {
   const [authError, setAuthError] = useState<string | null>(null);
@@ -82,55 +80,37 @@ export default function Landing() {
           </Button>
         </div>
 
-        {/* Content Tabs */}
-        <div className="mt-16">
-          <Tabs defaultValue="features" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-8">
-              <TabsTrigger value="features">Team Features</TabsTrigger>
-              <TabsTrigger value="dates">Important Dates</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="features" className="space-y-8">
-              {/* Features Grid */}
-              <div className="grid md:grid-cols-3 gap-8">
-                <div className="bg-white rounded-xl shadow-lg p-6 text-center">
-                  <div className="w-12 h-12 bg-navy/10 rounded-lg flex items-center justify-center mx-auto mb-4">
-                    <Calendar className="text-navy" size={24} />
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Team Events</h3>
-                  <p className="text-gray-600">
-                    Stay up-to-date with games, practices, team meetings, and award ceremonies.
-                  </p>
-                </div>
+        {/* Features Grid */}
+        <div className="mt-16 grid md:grid-cols-3 gap-8">
+          <div className="bg-white rounded-xl shadow-lg p-6 text-center">
+            <div className="w-12 h-12 bg-navy/10 rounded-lg flex items-center justify-center mx-auto mb-4">
+              <Calendar className="text-navy" size={24} />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Team Events</h3>
+            <p className="text-gray-600">
+              Stay up-to-date with games, practices, team meetings, and award ceremonies.
+            </p>
+          </div>
 
-                <div className="bg-white rounded-xl shadow-lg p-6 text-center">
-                  <div className="w-12 h-12 bg-navy/10 rounded-lg flex items-center justify-center mx-auto mb-4">
-                    <MessageCircle className="text-navy" size={24} />
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Tide Talk</h3>
-                  <p className="text-gray-600">
-                    Connect with teammates through organized chat channels for different topics.
-                  </p>
-                </div>
+          <div className="bg-white rounded-xl shadow-lg p-6 text-center">
+            <div className="w-12 h-12 bg-navy/10 rounded-lg flex items-center justify-center mx-auto mb-4">
+              <MessageCircle className="text-navy" size={24} />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Tide Talk</h3>
+            <p className="text-gray-600">
+              Connect with teammates through organized chat channels for different topics.
+            </p>
+          </div>
 
-                <div className="bg-white rounded-xl shadow-lg p-6 text-center">
-                  <div className="w-12 h-12 bg-navy/10 rounded-lg flex items-center justify-center mx-auto mb-4">
-                    <Camera className="text-navy" size={24} />
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Team Memories</h3>
-                  <p className="text-gray-600">
-                    Share and preserve special moments with photo uploads and team galleries.
-                  </p>
-                </div>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="dates" className="space-y-8">
-              <div className="bg-white rounded-xl shadow-lg p-6">
-                <ImportantDates />
-              </div>
-            </TabsContent>
-          </Tabs>
+          <div className="bg-white rounded-xl shadow-lg p-6 text-center">
+            <div className="w-12 h-12 bg-navy/10 rounded-lg flex items-center justify-center mx-auto mb-4">
+              <Camera className="text-navy" size={24} />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Team Memories</h3>
+            <p className="text-gray-600">
+              Share and preserve special moments with photo uploads and team galleries.
+            </p>
+          </div>
         </div>
 
         {/* Access Levels */}

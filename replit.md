@@ -115,6 +115,14 @@ Tides Hub is a full-stack web application designed for the Tides Girls Water Pol
 - Static files served from `dist/public/`
 
 ## Changelog
+- July 20, 2025: Important Dates Feature Migration to Tide Hub
+  - ✓ Moved Important Dates feature from landing page to Tide Hub as new tab after memories
+  - ✓ Added fourth tab "Important Dates" to authenticated user experience in Tides Hub
+  - ✓ Restored simple features grid layout on landing page for non-authenticated users
+  - ✓ Updated tab navigation to accommodate four tabs with responsive design
+  - ✓ Maintained all Important Dates functionality: categorization, priority levels, and date display
+  - ✓ Enhanced user experience by placing Important Dates within main application workflow
+
 - July 17, 2025: Schedule Food Checkbox Implementation
   - ✓ Added persistent "schedule food" checkbox to create event dialog
   - ✓ Added schedule_food column to events table with default value "false"

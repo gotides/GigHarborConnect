@@ -9,8 +9,9 @@ import { Link } from "wouter";
 import CalendarView from "@/components/calendar-view";
 import ChatView from "@/components/chat-view";
 import PhotosView from "@/components/photos-view";
+import ImportantDates from "@/components/important-dates-simple";
 
-type TabType = "calendar" | "chat" | "photos";
+type TabType = "calendar" | "chat" | "photos" | "dates";
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<TabType>("calendar");
@@ -37,6 +38,7 @@ export default function Home() {
     { id: "calendar" as const, label: "Events", icon: "calendar-alt" },
     { id: "chat" as const, label: "Tide Talk", icon: "comments" },
     { id: "photos" as const, label: "Memories", icon: "camera" },
+    { id: "dates" as const, label: "Important Dates", icon: "clock" },
   ];
 
   return (
@@ -66,7 +68,7 @@ export default function Home() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`tab-btn px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                  className={`tab-btn px-3 py-2 rounded-md text-sm font-medium transition-all ${
                     activeTab === tab.id ? "active" : ""
                   }`}
                 >
@@ -172,6 +174,7 @@ export default function Home() {
         {activeTab === "calendar" && <CalendarView />}
         {activeTab === "chat" && <ChatView />}
         {activeTab === "photos" && <PhotosView />}
+        {activeTab === "dates" && <ImportantDates />}
       </div>
 
       {/* Footer */}
