@@ -36,7 +36,7 @@ const priorityOptions = [
 const importantDateFormSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
-  date: z.string().min(1, "Date is required"),
+  date: z.string().min(1, "Date is required").transform((str) => new Date(str)),
   category: z.enum(["general", "season", "equipment", "team", "meeting", "competition"]).default("general"),
   priority: z.enum(["low", "normal", "high"]).default("normal"),
 });
@@ -59,7 +59,7 @@ function ImportantDateForm({
     defaultValues: {
       title: date?.title || "",
       description: date?.description || "",
-      date: date?.date ? format(parseISO(date.date), "yyyy-MM-dd'T'HH:mm") : "",
+      date: date?.date ? format(new Date(date.date), "yyyy-MM-dd'T'HH:mm") : "",
       category: date?.category || "general",
       priority: date?.priority || "normal",
     },
@@ -324,7 +324,7 @@ export default function ImportantDates() {
                     </div>
                     <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
                       <Calendar className="w-4 h-4" />
-                      <span>{format(parseISO(date.date), "EEEE, MMMM d, yyyy 'at' h:mm a")}</span>
+                      <span>{format(new Date(date.date), "EEEE, MMMM d, yyyy 'at' h:mm a")}</span>
                     </div>
                     {date.description && (
                       <p className="text-gray-700 text-sm">{date.description}</p>
