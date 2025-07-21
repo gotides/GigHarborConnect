@@ -1003,6 +1003,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
       
       const importantDate = await storage.createImportantDate(dateData);
+
+      // If food is scheduled, also create an event in the calendar
+      if (validatedData.scheduleFood === "true") {
+        try {
+          const eventData = {
+            title: `🗓️ ${validatedData.title}`,
+            description: validatedData.description || "Important date from Important Dates list",
+            startDate: validatedData.date,
+            endDate: null,
+            location: validatedData.mealCoordinatorLocation || "TBA",
+            category: "team",
+            scheduleFood: validatedData.scheduleFood,
+            mealCoordinatorName: validatedData.mealCoordinatorName,
+            mealCoordinatorEmail: validatedData.mealCoordinatorEmail,
+            mealCoordinatorPhone: validatedData.mealCoordinatorPhone,
+            mealCoordinatorLocation: validatedData.mealCoordinatorLocation,
+            mealCoordinatorAddress: validatedData.mealCoordinatorAddress,
+            foodCoordinationNotes: validatedData.foodCoordinationNotes,
+            createdBy: userId,
+          };
+          
+          await storage.createEvent(eventData);
+        } catch (eventError) {
+          console.error("Error creating corresponding event:", eventError);
+        }
+      }
+      
       res.status(201).json(importantDate);
     } catch (error) {
       console.error("Error creating important date:", error);
@@ -1057,75 +1084,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/important-dates", isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      
-      if (!hasPermission(user, 'canCreateEvents')) {
-        return res.status(403).json({ message: "Insufficient permissions to create important dates" });
-      }
-      
-      const dateData = {
-        ...req.body,
-        createdBy: userId,
-      };
-      
-      const validatedData = insertImportantDateSchema.parse(dateData);
-      const date = await storage.createImportantDate(validatedData);
-      res.status(201).json(date);
-    } catch (error) {
-      console.error("Error creating important date:", error);
-      res.status(400).json({ message: "Invalid date data", error: (error as Error).message });
-    }
-  });
 
-  app.put("/api/important-dates/:id", isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      
-      if (!hasPermission(user, 'canEditEvents')) {
-        return res.status(403).json({ message: "Insufficient permissions to edit important dates" });
-      }
-      
-      const id = parseInt(req.params.id);
-      const validatedData = insertImportantDateSchema.partial().parse(req.body);
-      const date = await storage.updateImportantDate(id, validatedData);
-      
-      if (!date) {
-        return res.status(404).json({ message: "Important date not found" });
-      }
-      
-      res.json(date);
-    } catch (error) {
-      console.error("Error updating important date:", error);
-      res.status(400).json({ message: "Invalid date data", error: (error as Error).message });
-    }
-  });
 
-  app.delete("/api/important-dates/:id", isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      
-      if (!hasPermission(user, 'canDeleteEvents')) {
-        return res.status(403).json({ message: "Insufficient permissions to delete important dates" });
-      }
-      
-      const id = parseInt(req.params.id);
-      const deleted = await storage.deleteImportantDate(id);
-      
-      if (!deleted) {
-        return res.status(404).json({ message: "Important date not found" });
-      }
-      
-      res.status(204).send();
-    } catch (error) {
-      console.error("Error deleting important date:", error);
-      res.status(500).json({ message: "Failed to delete important date" });
-    }
-  });
+
+
 
   const httpServer = createServer(app);
   return httpServer;

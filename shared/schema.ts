@@ -77,6 +77,13 @@ export const importantDates = pgTable("important_dates", {
   date: timestamp("date").notNull(),
   category: text("category").notNull().default("general"), // season, meets, equipment, etc.
   priority: text("priority").notNull().default("normal"), // high, normal, low
+  scheduleFood: text("schedule_food").notNull().default("false"),
+  mealCoordinatorName: text("meal_coordinator_name"),
+  mealCoordinatorEmail: text("meal_coordinator_email"),
+  mealCoordinatorPhone: text("meal_coordinator_phone"),
+  mealCoordinatorLocation: text("meal_coordinator_location"),
+  mealCoordinatorAddress: text("meal_coordinator_address"),
+  foodCoordinationNotes: text("food_coordination_notes"),
   createdBy: varchar("created_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -258,6 +265,9 @@ export const insertImportantDateSchema = createInsertSchema(importantDates).omit
 }).extend({
   date: z.union([z.string(), z.date()]).transform((val) => 
     typeof val === 'string' ? new Date(val) : val
+  ),
+  scheduleFood: z.union([z.string(), z.boolean()]).transform((val) => 
+    typeof val === 'boolean' ? (val ? "true" : "false") : val
   ),
 });
 

@@ -9,6 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -17,6 +18,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { ImportantDate } from "@shared/schema";
+import MealCoordinatorDialog from "./meal-coordinator-dialog";
 
 const categoryOptions = [
   { value: "season", label: "Season", icon: "🏊‍♀️" },
@@ -39,6 +41,21 @@ const importantDateFormSchema = z.object({
   date: z.string().min(1, "Date is required"),
   category: z.enum(["general", "season", "equipment", "team", "meeting", "competition"]).default("general"),
   priority: z.enum(["low", "normal", "high"]).default("normal"),
+  scheduleFood: z.boolean().default(false),
+  mealCoordinatorName: z.string().optional(),
+  mealCoordinatorEmail: z.string().optional(),
+  mealCoordinatorPhone: z.string().optional(),
+  mealCoordinatorLocation: z.string().optional(),
+  mealCoordinatorAddress: z.string().optional(),
+  foodCoordinationNotes: z.string().optional(),
+}).refine((data) => {
+  if (data.scheduleFood) {
+    return data.mealCoordinatorName && data.mealCoordinatorEmail && data.mealCoordinatorPhone && data.mealCoordinatorLocation;
+  }
+  return true;
+}, {
+  message: "Meal coordinator information is required when food is scheduled",
+  path: ["scheduleFood"],
 });
 
 type ImportantDateFormData = z.infer<typeof importantDateFormSchema>;
@@ -54,16 +71,49 @@ function ImportantDateForm({
   onCancel: () => void; 
   isLoading: boolean; 
 }) {
+  const [showMealCoordinatorDialog, setShowMealCoordinatorDialog] = useState(false);
+  
   const form = useForm<ImportantDateFormData>({
     resolver: zodResolver(importantDateFormSchema),
     defaultValues: {
       title: date?.title || "",
       description: date?.description || "",
       date: date?.date ? format(new Date(date.date), "yyyy-MM-dd'T'HH:mm") : "",
-      category: date?.category || "general",
-      priority: date?.priority || "normal",
+      category: (date?.category as "general" | "season" | "equipment" | "team" | "meeting" | "competition") || "general",
+      priority: (date?.priority as "low" | "normal" | "high") || "normal",
+      scheduleFood: date?.scheduleFood === "true" || false,
+      mealCoordinatorName: date?.mealCoordinatorName || "",
+      mealCoordinatorEmail: date?.mealCoordinatorEmail || "",
+      mealCoordinatorPhone: date?.mealCoordinatorPhone || "",
+      mealCoordinatorLocation: date?.mealCoordinatorLocation || "",
+      mealCoordinatorAddress: date?.mealCoordinatorAddress || "",
+      foodCoordinationNotes: date?.foodCoordinationNotes || "",
     },
   });
+
+  const handleScheduleFoodChange = (checked: boolean) => {
+    form.setValue("scheduleFood", checked);
+    if (checked) {
+      setShowMealCoordinatorDialog(true);
+    } else {
+      // Clear meal coordinator data when unchecking
+      form.setValue("mealCoordinatorName", "");
+      form.setValue("mealCoordinatorEmail", "");
+      form.setValue("mealCoordinatorPhone", "");
+      form.setValue("mealCoordinatorLocation", "");
+      form.setValue("mealCoordinatorAddress", "");
+      form.setValue("foodCoordinationNotes", "");
+    }
+  };
+
+  const saveMealCoordinator = (coordinatorData: any) => {
+    form.setValue("mealCoordinatorName", coordinatorData.name);
+    form.setValue("mealCoordinatorEmail", coordinatorData.email);
+    form.setValue("mealCoordinatorPhone", coordinatorData.phone);
+    form.setValue("mealCoordinatorLocation", coordinatorData.location);
+    form.setValue("mealCoordinatorAddress", coordinatorData.address || "");
+    setShowMealCoordinatorDialog(false);
+  };
 
   return (
     <Form {...form}>
@@ -159,12 +209,52 @@ function ImportantDateForm({
           )}
         />
         
+        {/* Food Scheduling Section */}
+        <FormField
+          control={form.control}
+          name="scheduleFood"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+              <FormControl>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={handleScheduleFoodChange}
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel className="text-sm font-medium">
+                  Schedule Food {form.watch("mealCoordinatorName") && `(${form.watch("mealCoordinatorName")})`}
+                </FormLabel>
+                <p className="text-xs text-gray-600">
+                  Check this box if food needs to be coordinated for this important date
+                </p>
+              </div>
+            </FormItem>
+          )}
+        />
+
         <div className="flex justify-end gap-2">
           <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
           <Button type="submit" disabled={isLoading}>
             {isLoading ? "Saving..." : date ? "Update" : "Create"}
           </Button>
         </div>
+
+        {/* Meal Coordinator Dialog */}
+        {showMealCoordinatorDialog && (
+          <MealCoordinatorDialog
+            open={showMealCoordinatorDialog}
+            onClose={() => setShowMealCoordinatorDialog(false)}
+            onSave={saveMealCoordinator}
+            existingData={{
+              name: form.getValues("mealCoordinatorName"),
+              email: form.getValues("mealCoordinatorEmail"),
+              phone: form.getValues("mealCoordinatorPhone"),
+              location: form.getValues("mealCoordinatorLocation"),
+              address: form.getValues("mealCoordinatorAddress"),
+            }}
+          />
+        )}
       </form>
     </Form>
   );
@@ -183,10 +273,22 @@ export default function ImportantDates() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: ImportantDateFormData) => 
-      apiRequest("POST", "/api/important-dates", data),
+    mutationFn: (data: ImportantDateFormData) => {
+      const dateData = {
+        ...data,
+        scheduleFood: data.scheduleFood ? "true" : "false",
+        mealCoordinatorName: data.scheduleFood ? data.mealCoordinatorName : null,
+        mealCoordinatorEmail: data.scheduleFood ? data.mealCoordinatorEmail : null,
+        mealCoordinatorPhone: data.scheduleFood ? data.mealCoordinatorPhone : null,
+        mealCoordinatorLocation: data.scheduleFood ? data.mealCoordinatorLocation : null,
+        mealCoordinatorAddress: data.scheduleFood ? data.mealCoordinatorAddress : null,
+        foodCoordinationNotes: data.scheduleFood ? data.foodCoordinationNotes : null,
+      };
+      return apiRequest("POST", "/api/important-dates", dateData);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/important-dates"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/events"] }); // Invalidate events for calendar
       setIsAddDialogOpen(false);
       toast({ title: "Success", description: "Important date created successfully" });
     },
@@ -200,10 +302,22 @@ export default function ImportantDates() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: Partial<ImportantDateFormData> }) =>
-      apiRequest("PUT", `/api/important-dates/${id}`, data),
+    mutationFn: ({ id, data }: { id: number; data: Partial<ImportantDateFormData> }) => {
+      const dateData = {
+        ...data,
+        scheduleFood: data.scheduleFood ? "true" : "false",
+        mealCoordinatorName: data.scheduleFood ? data.mealCoordinatorName : null,
+        mealCoordinatorEmail: data.scheduleFood ? data.mealCoordinatorEmail : null,
+        mealCoordinatorPhone: data.scheduleFood ? data.mealCoordinatorPhone : null,
+        mealCoordinatorLocation: data.scheduleFood ? data.mealCoordinatorLocation : null,
+        mealCoordinatorAddress: data.scheduleFood ? data.mealCoordinatorAddress : null,
+        foodCoordinationNotes: data.scheduleFood ? data.foodCoordinationNotes : null,
+      };
+      return apiRequest("PUT", `/api/important-dates/${id}`, dateData);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/important-dates"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/events"] }); // Invalidate events for calendar
       setIsEditDialogOpen(false);
       setEditingDate(null);
       toast({ title: "Success", description: "Important date updated successfully" });
@@ -370,7 +484,7 @@ export default function ImportantDates() {
                       isPast ? "text-gray-500" : "text-gray-600"
                     }`}>
                       <Calendar className="w-4 h-4" />
-                      <span>{format(new Date(date.date), "EEEE, MMMM d, yyyy 'at' h:mm a")}</span>
+                      <span>{format(typeof date.date === 'string' ? new Date(date.date) : date.date, "EEEE, MMMM d, yyyy 'at' h:mm a")}</span>
                     </div>
                     {date.description && (
                       <p className={`text-sm ${
