@@ -244,14 +244,14 @@ function ImportantDateForm({
         {showMealCoordinatorDialog && (
           <MealCoordinatorDialog
             open={showMealCoordinatorDialog}
-            onClose={() => setShowMealCoordinatorDialog(false)}
+            onOpenChange={(open) => setShowMealCoordinatorDialog(open)}
             onSave={saveMealCoordinator}
-            existingData={{
-              name: form.getValues("mealCoordinatorName"),
-              email: form.getValues("mealCoordinatorEmail"),
-              phone: form.getValues("mealCoordinatorPhone"),
-              location: form.getValues("mealCoordinatorLocation"),
-              address: form.getValues("mealCoordinatorAddress"),
+            initialData={{
+              name: form.getValues("mealCoordinatorName") || "",
+              email: form.getValues("mealCoordinatorEmail") || "",
+              phone: form.getValues("mealCoordinatorPhone") || "",
+              location: form.getValues("mealCoordinatorLocation") || "",
+              address: form.getValues("mealCoordinatorAddress") || "",
             }}
           />
         )}
@@ -447,7 +447,7 @@ export default function ImportantDates() {
         {sortedDates.length > 0 ? (
           sortedDates.map((date) => {
             const priorityInfo = getPriorityBadge(date.priority);
-            const isPast = isDatePast(date.date);
+            const isPast = isDatePast(date.date.toString());
             
             return (
               <div 

@@ -47,7 +47,7 @@ export default function MealCoordinatorDialog({
   };
 
   const handleCancel = () => {
-    form.reset();
+    form.reset(initialData);
     onOpenChange(false);
   };
 
