@@ -244,6 +244,29 @@ export default function ImportantDates() {
     return option || priorityOptions[1];
   };
 
+  const isDatePast = (dateStr: string) => {
+    const targetDate = new Date(dateStr);
+    const now = new Date();
+    return targetDate < now;
+  };
+
+  // Sort dates: upcoming first (chronological), then past dates at bottom
+  const sortedDates = [...importantDates].sort((a, b) => {
+    const dateA = new Date(a.date);
+    const dateB = new Date(b.date);
+    const now = new Date();
+    
+    const aIsPast = dateA < now;
+    const bIsPast = dateB < now;
+    
+    // If one is past and one is future, future comes first
+    if (aIsPast && !bIsPast) return 1;
+    if (!aIsPast && bIsPast) return -1;
+    
+    // Both are past or both are future, sort chronologically
+    return dateA.getTime() - dateB.getTime();
+  });
+
   const handleEdit = (date: ImportantDate) => {
     setEditingDate(date);
     setIsEditDialogOpen(true);
@@ -305,29 +328,56 @@ export default function ImportantDates() {
         )}
       </div>
 
-      {/* Dates List - Chronological Order */}
+      {/* Dates List - Upcoming first, past dates greyed at bottom */}
       <div className="space-y-4">
-        {importantDates.length > 0 ? (
-          importantDates.map((date) => {
+        {sortedDates.length > 0 ? (
+          sortedDates.map((date) => {
             const priorityInfo = getPriorityBadge(date.priority);
+            const isPast = isDatePast(date.date);
             
             return (
-              <div key={date.id} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+              <div 
+                key={date.id} 
+                className={`border rounded-lg p-4 shadow-sm transition-all ${
+                  isPast 
+                    ? "bg-gray-50 border-gray-300 opacity-60" 
+                    : "bg-white border-gray-200"
+                }`}
+              >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
-                      <span className="text-lg">{getCategoryIcon(date.category)}</span>
-                      <h4 className="text-lg font-semibold text-gray-900">{date.title}</h4>
-                      <Badge className={priorityInfo.color}>
+                      <span className={`text-lg ${isPast ? "grayscale" : ""}`}>
+                        {getCategoryIcon(date.category)}
+                      </span>
+                      <h4 className={`text-lg font-semibold ${
+                        isPast ? "text-gray-500" : "text-gray-900"
+                      }`}>
+                        {date.title}
+                      </h4>
+                      <Badge className={`${priorityInfo.color} ${
+                        isPast ? "opacity-75" : ""
+                      }`}>
                         {priorityInfo.label}
                       </Badge>
+                      {isPast && (
+                        <Badge variant="outline" className="text-gray-500 border-gray-400">
+                          Past
+                        </Badge>
+                      )}
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+                    <div className={`flex items-center gap-2 text-sm mb-2 ${
+                      isPast ? "text-gray-500" : "text-gray-600"
+                    }`}>
                       <Calendar className="w-4 h-4" />
                       <span>{format(new Date(date.date), "EEEE, MMMM d, yyyy 'at' h:mm a")}</span>
                     </div>
                     {date.description && (
-                      <p className="text-gray-700 text-sm">{date.description}</p>
+                      <p className={`text-sm ${
+                        isPast ? "text-gray-500" : "text-gray-700"
+                      }`}>
+                        {date.description}
+                      </p>
                     )}
                   </div>
                   {isAdmin && (
@@ -336,7 +386,10 @@ export default function ImportantDates() {
                         variant="ghost"
                         size="sm"
                         onClick={() => handleEdit(date)}
-                        className="text-gray-600 hover:text-blue-600"
+                        className={isPast 
+                          ? "text-gray-400 hover:text-gray-600" 
+                          : "text-gray-600 hover:text-blue-600"
+                        }
                       >
                         <Edit2 className="w-4 h-4" />
                       </Button>
@@ -344,7 +397,10 @@ export default function ImportantDates() {
                         variant="ghost"
                         size="sm"
                         onClick={() => handleDelete(date.id)}
-                        className="text-gray-600 hover:text-red-600"
+                        className={isPast 
+                          ? "text-gray-400 hover:text-gray-600" 
+                          : "text-gray-600 hover:text-red-600"
+                        }
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
