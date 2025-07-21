@@ -1048,10 +1048,25 @@ ${validatedData.description ? `**Details:** ${validatedData.description}` : ''}
 
 Please coordinate with the meal coordinator if you'd like to contribute food for this important date! #announcements`;
 
+          // Get user info for message creation
+          const user = await storage.getUser(userId);
+          const authorName = user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'System' : 'System';
+          const authorInitials = user ? 
+            `${(user.firstName || '').charAt(0)}${(user.lastName || '').charAt(0)}`.toUpperCase() || 'SY' : 
+            'SY';
+          
+          // Generate a consistent color based on user ID
+          const colors = ["#ef4444", "#f97316", "#eab308", "#22c55e", "#06b6d4", "#3b82f6", "#8b5cf6", "#ec4899"];
+          const colorIndex = userId ? parseInt(userId.slice(-1), 16) % colors.length : 0;
+          const authorColor = colors[colorIndex];
+
           const messageData = {
             content: announcementContent,
             channel: "announcements",
+            authorName,
+            authorInitials,
             authorId: userId,
+            authorColor,
           };
 
           await storage.createMessage(messageData);
