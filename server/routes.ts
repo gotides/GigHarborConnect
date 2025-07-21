@@ -1004,7 +1004,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const importantDate = await storage.createImportantDate(dateData, userId);
 
-      // If food is scheduled, also create an event in the calendar
+      // If food is scheduled, also create an event in the calendar and post announcement
       if (validatedData.scheduleFood === "true") {
         try {
           const eventData = {
@@ -1025,8 +1025,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
           };
           
           await storage.createEvent(eventData);
-        } catch (eventError) {
-          console.error("Error creating corresponding event:", eventError);
+
+          // Create announcement message in Tide Talk
+          const formattedDate = new Date(validatedData.date).toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit'
+          });
+
+          const announcementContent = `🍽️ **Food Coordination Needed!**
+
+📅 **${validatedData.title}** - ${formattedDate}
+📍 **Location:** ${validatedData.mealCoordinatorLocation}
+👤 **Meal Coordinator:** ${validatedData.mealCoordinatorName}
+📧 **Contact:** ${validatedData.mealCoordinatorEmail}
+📞 **Phone:** ${validatedData.mealCoordinatorPhone}
+
+${validatedData.description ? `**Details:** ${validatedData.description}` : ''}
+
+Please coordinate with the meal coordinator if you'd like to contribute food for this important date! #announcements`;
+
+          const messageData = {
+            content: announcementContent,
+            channel: "announcements",
+            authorId: userId,
+          };
+
+          await storage.createMessage(messageData);
+        } catch (error) {
+          console.error("Error creating event or announcement:", error);
         }
       }
       
