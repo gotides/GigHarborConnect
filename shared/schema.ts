@@ -255,6 +255,10 @@ export const insertImportantDateSchema = createInsertSchema(importantDates).omit
   id: true,
   createdBy: true,
   createdAt: true,
+}).extend({
+  date: z.union([z.string(), z.date()]).transform((val) => 
+    typeof val === 'string' ? new Date(val) : val
+  ),
 });
 
 // Types

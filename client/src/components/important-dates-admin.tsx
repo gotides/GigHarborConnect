@@ -36,7 +36,7 @@ const priorityOptions = [
 const importantDateFormSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
-  date: z.string().min(1, "Date is required").transform((str) => new Date(str)),
+  date: z.string().min(1, "Date is required"),
   category: z.enum(["general", "season", "equipment", "team", "meeting", "competition"]).default("general"),
   priority: z.enum(["low", "normal", "high"]).default("normal"),
 });
