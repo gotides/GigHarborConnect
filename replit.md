@@ -115,6 +115,17 @@ Tides Hub is a full-stack web application designed for the Tides Girls Water Pol
 - Static files served from `dist/public/`
 
 ## Changelog
+- July 21, 2025: Important Dates Integration on Landing Page
+  - ✓ Added Important Dates section to landing page for all users including guests
+  - ✓ Implemented same sorting logic as Important Dates page: upcoming dates first, past dates greyed out at bottom
+  - ✓ Added proper React Query integration for fetching important dates without authentication
+  - ✓ Applied consistent styling and visual design matching Tides Hub aesthetic
+  - ✓ Displays category icons, priority badges, descriptions, and formatted dates
+  - ✓ Shows loading states and empty states appropriately
+  - ✓ All users can now see important team dates before registering
+  - ✓ Fixed MealCoordinatorDialog prop mismatch issue (onOpenChange vs onClose)
+  - ✓ Resolved TypeScript compilation errors in Important Dates components
+
 - July 20, 2025: Important Dates Feature Migration to Tide Hub
   - ✓ Moved Important Dates feature from landing page to Tide Hub as new tab after memories
   - ✓ Added fourth tab "Important Dates" to authenticated user experience in Tides Hub

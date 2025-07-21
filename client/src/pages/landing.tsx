@@ -2,9 +2,34 @@ import { useEffect, useState } from "react";
 import { Anchor, Calendar, MessageCircle, Camera, Shield, Users, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { useQuery } from "@tanstack/react-query";
+import { format } from "date-fns";
+import type { ImportantDate } from "@shared/schema";
+
+const categoryOptions = [
+  { value: "season", label: "Season", icon: "🏊‍♀️" },
+  { value: "competition", label: "Competition", icon: "🏆" },
+  { value: "equipment", label: "Equipment", icon: "🥽" },
+  { value: "meeting", label: "Meeting", icon: "👥" },
+  { value: "team", label: "Team", icon: "🤝" },
+  { value: "general", label: "General", icon: "📋" },
+];
+
+const priorityOptions = [
+  { value: "high", label: "High Priority", color: "bg-red-100 text-red-800 border-red-200" },
+  { value: "normal", label: "Normal", color: "bg-blue-100 text-blue-800 border-blue-200" },
+  { value: "low", label: "Low Priority", color: "bg-gray-100 text-gray-800 border-gray-200" },
+];
 
 export default function Landing() {
   const [authError, setAuthError] = useState<string | null>(null);
+
+  // Fetch important dates for all users
+  const { data: importantDates = [], isLoading: datesLoading } = useQuery<ImportantDate[]>({
+    queryKey: ["/api/important-dates"],
+    retry: false, // Don't retry for guest users
+  });
 
   useEffect(() => {
     // Check for authentication error parameters in URL
@@ -21,6 +46,39 @@ export default function Landing() {
       window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, []);
+
+  const getCategoryIcon = (category: string) => {
+    const option = categoryOptions.find(opt => opt.value === category);
+    return option?.icon || "📋";
+  };
+
+  const getPriorityBadge = (priority: string) => {
+    const option = priorityOptions.find(opt => opt.value === priority);
+    return option || priorityOptions[1];
+  };
+
+  const isDatePast = (dateStr: string) => {
+    const targetDate = new Date(dateStr);
+    const now = new Date();
+    return targetDate < now;
+  };
+
+  // Sort dates: upcoming first (chronological), then past dates at bottom
+  const sortedDates = [...importantDates].sort((a, b) => {
+    const dateA = new Date(a.date);
+    const dateB = new Date(b.date);
+    const now = new Date();
+    
+    const aIsPast = dateA < now;
+    const bIsPast = dateB < now;
+    
+    // If one is past and one is future, future comes first
+    if (aIsPast && !bIsPast) return 1;
+    if (!aIsPast && bIsPast) return -1;
+    
+    // Both are past or both are future, sort chronologically
+    return dateA.getTime() - dateB.getTime();
+  });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
@@ -111,6 +169,87 @@ export default function Landing() {
               Share and preserve special moments with photo uploads and team galleries.
             </p>
           </div>
+        </div>
+
+        {/* Important Dates Section */}
+        <div className="mt-16 bg-white rounded-xl shadow-lg p-8">
+          <div className="text-center mb-8">
+            <Calendar className="w-12 h-12 text-navy mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Important Dates</h2>
+            <p className="text-gray-600">
+              Key dates and deadlines for the season
+            </p>
+          </div>
+
+          {datesLoading ? (
+            <div className="space-y-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="animate-pulse bg-slate-200 rounded-lg h-20"></div>
+              ))}
+            </div>
+          ) : sortedDates.length > 0 ? (
+            <div className="space-y-4">
+              {sortedDates.map((date) => {
+                const priorityInfo = getPriorityBadge(date.priority);
+                const isPast = isDatePast(date.date.toString());
+                
+                return (
+                  <div 
+                    key={date.id} 
+                    className={`border rounded-lg p-4 shadow-sm transition-all ${
+                      isPast 
+                        ? "bg-gray-50 border-gray-300 opacity-60" 
+                        : "bg-white border-gray-200"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <span className={`text-lg ${isPast ? "grayscale" : ""}`}>
+                            {getCategoryIcon(date.category)}
+                          </span>
+                          <h4 className={`text-lg font-semibold ${
+                            isPast ? "text-gray-500" : "text-gray-900"
+                          }`}>
+                            {date.title}
+                          </h4>
+                          <Badge className={`${priorityInfo.color} ${
+                            isPast ? "opacity-75" : ""
+                          }`}>
+                            {priorityInfo.label}
+                          </Badge>
+                          {isPast && (
+                            <Badge variant="outline" className="text-gray-500 border-gray-400">
+                              Past
+                            </Badge>
+                          )}
+                        </div>
+                        
+                        {date.description && (
+                          <p className={`text-sm mb-2 ${
+                            isPast ? "text-gray-400" : "text-gray-600"
+                          }`}>
+                            {date.description}
+                          </p>
+                        )}
+                        
+                        <div className={`text-sm ${
+                          isPast ? "text-gray-400" : "text-gray-500"
+                        }`}>
+                          📅 {format(new Date(date.date), "MMMM d, yyyy 'at' h:mm a")}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500">No important dates scheduled yet.</p>
+            </div>
+          )}
         </div>
 
         {/* Access Levels */}
