@@ -122,6 +122,11 @@ Tides Hub is a full-stack web application designed for the Tides Girls Water Pol
   - ✓ Updated tab navigation to accommodate four tabs with responsive design
   - ✓ Maintained all Important Dates functionality: categorization, priority levels, and date display
   - ✓ Enhanced user experience by placing Important Dates within main application workflow
+  - ✓ Added full administrator controls for Important Dates including add, edit, and delete functionality
+  - ✓ Implemented chronological ordering with next upcoming date at top, removed past date greying
+  - ✓ Created comprehensive API endpoints for Important Dates CRUD operations (POST, PUT, DELETE)
+  - ✓ Built admin form interface with date picker, category selection, and priority levels
+  - ✓ Fixed HTTP token error in API requests by correcting method parameter format
 
 - July 17, 2025: Schedule Food Checkbox Implementation
   - ✓ Added persistent "schedule food" checkbox to create event dialog

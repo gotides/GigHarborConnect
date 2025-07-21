@@ -184,7 +184,7 @@ export default function ImportantDates() {
 
   const createMutation = useMutation({
     mutationFn: (data: ImportantDateFormData) => 
-      apiRequest("/api/important-dates", "POST", data),
+      apiRequest("/api/important-dates", { method: "POST", body: data }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/important-dates"] });
       setIsAddDialogOpen(false);
@@ -201,7 +201,7 @@ export default function ImportantDates() {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: Partial<ImportantDateFormData> }) =>
-      apiRequest(`/api/important-dates/${id}`, "PUT", data),
+      apiRequest(`/api/important-dates/${id}`, { method: "PUT", body: data }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/important-dates"] });
       setIsEditDialogOpen(false);
@@ -218,7 +218,7 @@ export default function ImportantDates() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => apiRequest(`/api/important-dates/${id}`, "DELETE"),
+    mutationFn: (id: number) => apiRequest(`/api/important-dates/${id}`, { method: "DELETE" }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/important-dates"] });
       toast({ title: "Success", description: "Important date deleted successfully" });
