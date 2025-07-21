@@ -436,7 +436,7 @@ export class DatabaseStorage implements IStorage {
 
   // Important dates methods
   async getImportantDates(): Promise<ImportantDate[]> {
-    return await db.select().from(importantDates).orderBy(desc(importantDates.date));
+    return await db.select().from(importantDates).orderBy(importantDates.date);
   }
 
   async getImportantDate(id: number): Promise<ImportantDate | undefined> {
@@ -460,7 +460,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteImportantDate(id: number): Promise<boolean> {
     const result = await db.delete(importantDates).where(eq(importantDates.id, id));
-    return (result.rowCount ?? 0) > 0;
+    return result.rowCount !== null && result.rowCount > 0;
   }
 }
 

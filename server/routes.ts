@@ -992,6 +992,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
       
+      if (!hasPermission(user, 'canManageUsers')) {
+        return res.status(403).json({ message: "Insufficient permissions to manage important dates" });
+      }
+
+      const validatedData = insertImportantDateSchema.parse(req.body);
+      const dateData = {
+        ...validatedData,
+        createdBy: userId,
+      };
+      
+      const importantDate = await storage.createImportantDate(dateData);
+      res.status(201).json(importantDate);
+    } catch (error) {
+      console.error("Error creating important date:", error);
+      res.status(400).json({ message: "Invalid date data", error: (error as Error).message });
+    }
+  });
+
+  app.put("/api/important-dates/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!hasPermission(user, 'canManageUsers')) {
+        return res.status(403).json({ message: "Insufficient permissions to manage important dates" });
+      }
+
+      const id = parseInt(req.params.id);
+      const validatedData = insertImportantDateSchema.partial().parse(req.body);
+      const importantDate = await storage.updateImportantDate(id, validatedData);
+      
+      if (!importantDate) {
+        return res.status(404).json({ message: "Important date not found" });
+      }
+      
+      res.json(importantDate);
+    } catch (error) {
+      console.error("Error updating important date:", error);
+      res.status(400).json({ message: "Invalid date data", error: (error as Error).message });
+    }
+  });
+
+  app.delete("/api/important-dates/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!hasPermission(user, 'canManageUsers')) {
+        return res.status(403).json({ message: "Insufficient permissions to manage important dates" });
+      }
+
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteImportantDate(id);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Important date not found" });
+      }
+      
+      res.json({ message: "Important date deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting important date:", error);
+      res.status(500).json({ message: "Failed to delete important date" });
+    }
+  });
+
+  app.post("/api/important-dates", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
       if (!hasPermission(user, 'canCreateEvents')) {
         return res.status(403).json({ message: "Insufficient permissions to create important dates" });
       }

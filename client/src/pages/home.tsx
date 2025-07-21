@@ -9,7 +9,7 @@ import { Link } from "wouter";
 import CalendarView from "@/components/calendar-view";
 import ChatView from "@/components/chat-view";
 import PhotosView from "@/components/photos-view";
-import ImportantDates from "@/components/important-dates-simple";
+import ImportantDates from "@/components/important-dates-admin";
 
 type TabType = "calendar" | "chat" | "photos" | "dates";
 
