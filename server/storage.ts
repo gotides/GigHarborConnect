@@ -74,6 +74,13 @@ export interface IStorage {
   deleteHashtag(id: number): Promise<boolean>;
   toggleHashtagStatus(id: number): Promise<Hashtag | undefined>;
   
+  // Important Dates methods
+  getImportantDates(): Promise<ImportantDate[]>;
+  getImportantDate(id: number): Promise<ImportantDate | undefined>;
+  createImportantDate(importantDate: InsertImportantDate, userId: string): Promise<ImportantDate>;
+  updateImportantDate(id: number, importantDate: Partial<InsertImportantDate>): Promise<ImportantDate | undefined>;
+  deleteImportantDate(id: number): Promise<boolean>;
+  
   // Access request methods
   getAccessRequests(): Promise<AccessRequest[]>;
   createAccessRequest(request: InsertAccessRequest): Promise<AccessRequest>;
@@ -133,7 +140,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteUser(id: string): Promise<boolean> {
     const result = await db.delete(users).where(eq(users.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 
   // Event methods
@@ -444,8 +451,9 @@ export class DatabaseStorage implements IStorage {
     return date;
   }
 
-  async createImportantDate(dateData: InsertImportantDate): Promise<ImportantDate> {
-    const [date] = await db.insert(importantDates).values(dateData).returning();
+  async createImportantDate(dateData: InsertImportantDate, userId?: string): Promise<ImportantDate> {
+    const dataWithUser = userId ? { ...dateData, createdBy: userId } : dateData;
+    const [date] = await db.insert(importantDates).values(dataWithUser).returning();
     return date;
   }
 

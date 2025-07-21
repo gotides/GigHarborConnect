@@ -1002,7 +1002,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         createdBy: userId,
       };
       
-      const importantDate = await storage.createImportantDate(dateData);
+      const importantDate = await storage.createImportantDate(dateData, userId);
 
       // If food is scheduled, also create an event in the calendar
       if (validatedData.scheduleFood === "true") {
